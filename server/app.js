@@ -13,10 +13,6 @@ const authRoutes = require("./routes/auth.routes");
 const app = express();
 app.use(cors());
 
-// View engine setup only needed for error pages
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "pug");
-
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -44,26 +40,42 @@ if (process.env.NODE_ENV === "production") {
     // Serve static files from the React app
     app.use(express.static(path.join(__dirname, "../client/dist")));
 
+    // Set up error handling for static files
+    app.use((err, req, res, next) => {
+        if (err.code === "ENOENT") {
+            res.status(404).json({ message: "Asset not found" });
+        } else {
+            next(err);
+        }
+    });
+
     // Handle React routing, return all requests to React app
-    app.get("*", (req, res) => {
+    app.get("*", function (req, res) {
         res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+    });
+} else {
+    // Development error handler
+    app.use(function (req, res, next) {
+        next(createError(404));
     });
 }
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-    next(createError(404));
-});
-
-// error handler
+// Error handler
 app.use(function (err, req, res, next) {
-    // set locals, only providing error in development
+    // Set locals, only providing error in development
     res.locals.message = err.message;
     res.locals.error = req.app.get("env") === "development" ? err : {};
 
-    // render the error page
+    // Send error response
     res.status(err.status || 500);
-    res.render("error");
+    if (req.accepts("html")) {
+        res.render("error");
+    } else {
+        res.json({
+            message: err.message,
+            error: req.app.get("env") === "development" ? err : {},
+        });
+    }
 });
 
 module.exports = app;
