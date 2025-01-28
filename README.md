@@ -9,10 +9,50 @@ This application demonstrates OAuth 2.0 integration with Salesforce, supporting 
 ## Project Structure
 
 ```
-/
-├── client/          # React frontend
-├── server/          # Express backend
-└── README.md
+client
+├── .gitignore
+├── README.md
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── public
+│   └── vite.svg
+├── src
+│   ├── App.css
+│   ├── App.jsx
+│   ├── assets
+│   │   └── react.svg
+│   ├── components
+│   ├── context
+│   │   └── AuthContext.jsx
+│   ├── index.css
+│   ├── main.jsx
+│   └── pages
+│       ├── Dashboard.jsx
+│       └── HomePage.jsx
+└── vite.config.js
+server
+├── .env
+├── app.js
+├── bin
+│   └── www
+├── package-lock.json
+├── package.json
+├── public
+│   ├── images
+│   ├── javascripts
+│   └── stylesheets
+│       └── style.css
+├── routes
+│   ├── auth.routes.js
+│   └── index.js
+├── utils
+│   └── auth.service.js
+└── views
+    ├── error.pug
+    ├── index.pug
+    └── layout.pug
 ```
 
 ## Manual Deployment Steps

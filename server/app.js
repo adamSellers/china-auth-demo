@@ -8,7 +8,6 @@ const cors = require("cors");
 const session = require("express-session");
 const AuthService = require("./utils/auth.service");
 
-const indexRouter = require("./routes/index");
 const authRoutes = require("./routes/auth.routes");
 
 const app = express();
@@ -49,8 +48,6 @@ if (process.env.NODE_ENV === "production") {
     app.get("*", (req, res) => {
         res.sendFile(path.join(__dirname, "../client/dist/index.html"));
     });
-} else {
-    app.use("/", indexRouter);
 }
 
 // catch 404 and forward to error handler
