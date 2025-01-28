@@ -2,19 +2,17 @@
     "name": "sf-oauth-demo",
     "version": "1.0.0",
     "private": true,
-    "scripts": {
-        "start": "cd server && npm start",
-        "dev:server": "cd server && npm run dev",
-        "dev:client": "cd client && npm run dev",
-        "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-        "install:all": "npm install && cd client && npm install && cd ../server && npm install",
-        "heroku-postbuild": "cd client && npm install && npm run build && cd ../server && npm install"
-    },
-    "devDependencies": {
-        "concurrently": "^8.2.2"
-    },
     "engines": {
         "node": "20.x",
         "npm": "10.x"
-    }
+    },
+    "scripts": {
+        "start": "cd server && npm start",
+        "heroku-postbuild": "cd client && npm install && (npm install @rollup/rollup-linux-x64-gnu || true) && npm run build && cd ../server && npm install",
+        "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\""
+    },
+    "cacheDirectories": [
+        "client/node_modules",
+        "server/node_modules"
+    ]
 }
