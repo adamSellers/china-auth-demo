@@ -5,7 +5,7 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const cors = require("cors");
 const session = require("express-session");
-const { default: RedisStore } = require("connect-redis"); // Fixed import
+const Redis = require("connect-redis");
 const { createClient } = require("redis");
 const AuthService = require("./utils/auth.service");
 const authRoutes = require("./routes/auth.routes");
@@ -33,16 +33,19 @@ async function initializeApp() {
         console.log("Redis client connected successfully");
     } catch (err) {
         console.error("Redis connection error:", err);
-        throw err; // Let's fail fast if Redis isn't working
+        throw err;
     }
+
+    // Create Redis store
+    const redisStore = new Redis.RedisStore({
+        client: redisClient,
+        prefix: "sf-oauth:",
+    });
 
     // Session middleware with Redis store
     app.use(
         session({
-            store: new RedisStore({
-                client: redisClient,
-                prefix: "sf-oauth:",
-            }),
+            store: redisStore,
             secret: process.env.SESSION_SECRET || "dev-secret-key",
             resave: false,
             saveUninitialized: false,
