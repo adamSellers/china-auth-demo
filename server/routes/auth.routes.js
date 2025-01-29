@@ -45,80 +45,65 @@ router.get(
 
 router.get("/logout", async (req, res) => {
     try {
-        if (req.user && req.user.accessToken) {
-            const baseUrl =
-                req.user.environment === "sfoa"
-                    ? process.env.SFOA_LOGIN_URL
-                    : process.env.SF_LOGIN_URL;
+        // 1. Get the correct base URL based on current environment
+        const baseUrl =
+            req.user?.environment === "sfoa"
+                ? process.env.SFOA_LOGIN_URL
+                : process.env.SF_LOGIN_URL;
 
-            // Build the app's base URL for the redirect
-            const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-            const appBaseUrl = `${protocol}://${req.headers.host}`;
-
-            // First, do a frontend session logout
-            const frontendLogoutUrl = `${baseUrl}/secur/frontdoor.jsp?retURL=${encodeURIComponent(
-                "/secur/logout.jsp"
-            )}&save=true`;
-
+        if (req.user?.accessToken) {
             try {
-                await axios.get(frontendLogoutUrl, {
-                    headers: {
-                        Authorization: `Bearer ${req.user.accessToken}`,
-                    },
-                });
-            } catch (error) {
-                console.error("Error in frontend logout:", error);
-                // Continue with the rest of the logout process
-            }
-
-            // Then revoke the access token
-            try {
+                // 2. Revoke the Salesforce access token
                 await axios.post(`${baseUrl}/services/oauth2/revoke`, null, {
-                    params: {
-                        token: req.user.accessToken,
-                    },
+                    params: { token: req.user.accessToken },
                 });
             } catch (error) {
                 console.error("Error revoking token:", error);
-                // Continue with the rest of the logout process
+            }
+        }
+
+        // 3. Clear all session data
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("Error destroying session:", err);
             }
 
-            // Finally do the full logout with redirect back to our app
-            const logoutUrl = `${baseUrl}/secur/logout.jsp?retURL=${encodeURIComponent(
-                appBaseUrl
-            )}`;
+            // 4. Clear passport login
+            req.logout(() => {
+                // 5. Clear all cookies
+                res.clearCookie("connect.sid");
 
-            // Destroy the local session
-            req.session.destroy((err) => {
-                if (err) {
-                    console.error("Error destroying session:", err);
-                    return res.status(500).json({ error: "Logout failed" });
-                }
+                // 6. Construct Salesforce logout URL with immediate redirect back
+                const appUrl = `${req.protocol}://${req.get("host")}`;
+                const logoutUrl = `${baseUrl}/secur/logout.jsp?retURL=${encodeURIComponent(
+                    appUrl
+                )}`;
 
-                // Clear the login session and redirect to Salesforce logout
-                req.logout(() => {
-                    res.redirect(logoutUrl);
+                console.log("Performing logout:", {
+                    baseUrl,
+                    logoutUrl,
+                    environment: req.user?.environment,
                 });
+
+                // 7. Redirect to Salesforce logout
+                res.redirect(logoutUrl);
             });
-        } else {
-            // If no user or token, just clear local session
-            req.session.destroy((err) => {
-                if (err) {
-                    console.error("Error destroying session:", err);
-                    return res.status(500).json({ error: "Logout failed" });
-                }
-                req.logout(() => {
-                    res.redirect("/");
-                });
-            });
-        }
+        });
     } catch (error) {
         console.error("Error during logout:", error);
-        res.status(500).json({
-            error: "Logout failed",
-            details: error.message,
-        });
+        // Even if there's an error, try to redirect home
+        res.redirect("/");
     }
+});
+
+// Add a route to check session status
+router.get("/session-status", (req, res) => {
+    res.json({
+        isAuthenticated: req.isAuthenticated(),
+        session: req.session,
+        user: req.user,
+        cookies: req.cookies,
+    });
 });
 
 router.get("/user-info", async (req, res) => {

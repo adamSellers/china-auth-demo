@@ -3,13 +3,13 @@ const OAuth2Strategy = require("passport-oauth2");
 
 class AuthService {
     static getConfig(env) {
+        // Default to regular SF if env is not explicitly sfoa
         const isSFOA = env === "sfoa";
-        const baseUrl = isSFOA
-            ? process.env.SFOA_LOGIN_URL
-            : process.env.SF_LOGIN_URL;
 
         return {
-            baseUrl,
+            baseUrl: isSFOA
+                ? process.env.SFOA_LOGIN_URL
+                : process.env.SF_LOGIN_URL,
             clientId: isSFOA
                 ? process.env.SFOA_CLIENT_ID
                 : process.env.SF_CLIENT_ID,
@@ -22,6 +22,7 @@ class AuthService {
     static initializePassport() {
         const strategy = new OAuth2Strategy(
             {
+                // These initial values don't matter as they'll be overridden in authorizationParams
                 authorizationURL: `${process.env.SF_LOGIN_URL}/services/oauth2/authorize`,
                 tokenURL: `${process.env.SF_LOGIN_URL}/services/oauth2/token`,
                 clientID: process.env.SF_CLIENT_ID,
@@ -30,25 +31,21 @@ class AuthService {
                     process.env.SF_CALLBACK_URL ||
                     "http://localhost:3000/auth/salesforce/callback",
                 passReqToCallback: true,
-                state: true, // Enable state parameter for CSRF protection
+                state: true,
             },
             function (req, accessToken, refreshToken, params, profile, cb) {
-                // Get environment from session or query
-                const env =
-                    req.session?.oauth_env || req.query?.env || "salesforce";
-
-                console.log("OAuth callback received:", {
-                    hasAccessToken: !!accessToken,
-                    hasInstanceUrl: !!params?.instance_url,
-                    instanceUrl: params?.instance_url,
-                    environment: env,
-                    session_env: req.session?.oauth_env,
-                    query_env: req.query?.env,
-                });
+                // Get environment from the initial auth request
+                const env = req.query.env || "salesforce";
 
                 if (!params.instance_url) {
-                    console.error("No instance_url received from OAuth");
                     return cb(new Error("No instance URL received"));
+                }
+
+                // For SFOA, verify we got a .cn URL
+                if (env === "sfoa" && !params.instance_url.endsWith(".cn")) {
+                    return cb(
+                        new Error("Invalid instance URL for SFOA environment")
+                    );
                 }
 
                 return cb(null, {
@@ -56,36 +53,28 @@ class AuthService {
                     refreshToken,
                     instanceUrl: params.instance_url,
                     environment: env,
-                    profile,
                 });
             }
         );
 
-        // Override the OAuth URLs based on the environment parameter
         strategy.authorizationParams = function (options) {
-            const env =
-                options?.req?.session?.oauth_env ||
-                options?.req?.query?.env ||
-                "salesforce";
-            const config = AuthService.getConfig(env);
-
             if (!options?.req) {
-                console.warn("Request object missing in authorizationParams");
-                console.log("Available options:", JSON.stringify(options));
-                // Return basic params without modifying OAuth URLs
-                return { env };
+                console.error("Missing request object in authorizationParams");
+                return {};
             }
 
-            // Set all OAuth endpoints to use the environment-specific base URL
+            const env = options.req.query.env || "salesforce";
+            const config = AuthService.getConfig(env);
+
+            // Configure OAuth endpoints
             this._oauth2._authorizeUrl = `${config.baseUrl}/services/oauth2/authorize`;
             this._oauth2._accessTokenUrl = `${config.baseUrl}/services/oauth2/token`;
             this._oauth2._clientId = config.clientId;
             this._oauth2._clientSecret = config.clientSecret;
 
-            console.log(`Configuring OAuth endpoints for ${env}:`, {
+            console.log(`OAuth configuration for ${env}:`, {
                 authorizeUrl: this._oauth2._authorizeUrl,
-                accessTokenUrl: this._oauth2._accessTokenUrl,
-                clientId: this._oauth2._clientId?.substring(0, 5) + "...", // Log partial client ID for debugging
+                environment: env,
             });
 
             return { env };
@@ -93,10 +82,10 @@ class AuthService {
 
         passport.use("salesforce", strategy);
 
+        // Only serialize essential data
         passport.serializeUser((user, done) => {
             const serialized = {
                 accessToken: user.accessToken,
-                refreshToken: user.refreshToken,
                 instanceUrl: user.instanceUrl,
                 environment: user.environment,
             };

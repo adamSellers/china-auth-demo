@@ -18,12 +18,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Session middleware (must be before passport)
+// Session middleware configuration
 app.use(
     session({
         secret: process.env.SESSION_SECRET || "dev-secret-key",
         resave: false,
         saveUninitialized: false,
+        rolling: true,
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        },
+        unset: "destroy",
     })
 );
 
