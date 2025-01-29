@@ -10,7 +10,6 @@ class AuthService {
 
         const strategy = new OAuth2Strategy(
             {
-                // Initialize with placeholder values - will be overridden in authenticate
                 authorizationURL:
                     process.env.SF_LOGIN_URL + "/services/oauth2/authorize",
                 tokenURL: process.env.SF_LOGIN_URL + "/services/oauth2/token",
@@ -34,10 +33,9 @@ class AuthService {
             }
         );
 
-        // Override authenticate to set correct URLs before proceeding
-        const authenticate = strategy.authenticate.bind(strategy);
-        strategy.authenticate = function (req, options) {
-            const env = req.session?.oauth_env;
+        // Override authorizationParams instead of authenticate
+        strategy.authorizationParams = function (options) {
+            const env = options?.req?.session?.oauth_env;
 
             if (env === "sfoa") {
                 this._oauth2._authorizeUrl = `${process.env.SFOA_LOGIN_URL}/services/oauth2/authorize`;
@@ -51,7 +49,11 @@ class AuthService {
                 this._oauth2._clientSecret = process.env.SF_CLIENT_SECRET;
             }
 
-            return authenticate.call(this, req, options);
+            return {
+                env,
+                // Add a timestamp to prevent caching
+                _ts: Date.now(),
+            };
         };
 
         // Simplified serialization
