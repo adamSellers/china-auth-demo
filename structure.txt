@@ -1,3 +1,23 @@
+server
+├── .env
+├── app.js
+├── bin
+│   └── www
+├── package-lock.json
+├── package.json
+├── public
+│   ├── images
+│   ├── javascripts
+│   └── stylesheets
+│       └── style.css
+├── routes
+│   └── auth.routes.js
+├── utils
+│   └── auth.service.js
+└── views
+    ├── error.pug
+    ├── index.pug
+    └── layout.pug
 client
 ├── .gitignore
 ├── README.md
@@ -13,6 +33,7 @@ client
 │   ├── assets
 │   │   └── react.svg
 │   ├── components
+│   │   └── Layout.jsx
 │   ├── context
 │   │   └── AuthContext.jsx
 │   ├── index.css
@@ -21,25 +42,3 @@ client
 │       ├── Dashboard.jsx
 │       └── HomePage.jsx
 └── vite.config.js
-server
-├── .env
-├── app.js
-├── bin
-│   └── www
-├── package-lock.json
-├── package.json
-├── public
-│   ├── images
-│   ├── javascripts
-│   └── stylesheets
-│       └── style.css
-├── routes
-│   ├── auth.routes.js
-│   └── index.js
-├── utils
-│   └── auth.service.js
-└── views
-    ├── error.pug
-    ├── index.pug
-    └── layout.pug
-

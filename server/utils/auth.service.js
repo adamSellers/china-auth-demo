@@ -12,9 +12,8 @@ class AuthService {
                     clientID: process.env.SF_CLIENT_ID,
                     clientSecret: process.env.SF_CLIENT_SECRET,
                     callbackURL:
-                        process.env.NODE_ENV === "production"
-                            ? "enterAProductionURLHereIfYouLike"
-                            : "http://localhost:3000/auth/salesforce/callback",
+                        process.env.SF_CALLBACK_URL ||
+                        "http://localhost:3000/auth/salesforce/callback",
                 },
                 function (accessToken, refreshToken, params, profile, cb) {
                     console.log("OAuth callback received:", {
