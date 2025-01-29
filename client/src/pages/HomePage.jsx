@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import {
@@ -16,11 +17,13 @@ import {
 import {
   GitHub as GitHubIcon,
   ChevronRight as ChevronRightIcon,
-  Terminal as TerminalIcon,
 } from '@mui/icons-material';
+import EnvironmentSelector from '../components/EnvironmentSelector';
+import { DEFAULT_ENVIRONMENT } from '../config/environments';
 
 const HomePage = () => {
   const { user, loading } = useAuth();
+  const [selectedEnvironment, setSelectedEnvironment] = useState(DEFAULT_ENVIRONMENT);
 
   if (loading) {
     return (
@@ -34,8 +37,21 @@ const HomePage = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const handleLogin = () => {
+    // Store the selected environment in sessionStorage
+    sessionStorage.setItem('selectedEnvironment', JSON.stringify(selectedEnvironment));
+    window.location.href = `/auth/salesforce?env=${selectedEnvironment.id}`;
+  };
+
   return (
     <Box sx={{ py: 4 }}>
+      {/* Title Section */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h3" component="h1" gutterBottom>
+          Salesforce OAuth Demo
+        </Typography>
+      </Box>
+
       {/* Login Section */}
       <Paper 
         sx={{ 
@@ -53,40 +69,31 @@ const HomePage = () => {
           Login with Salesforce
         </Typography>
 
-        <Box sx={{ width: '100%', maxWidth: 400 }}>
-          <Typography variant="body1" color="text.secondary" gutterBottom>
-            Connecting to Salesforce environment:
-          </Typography>
-          <Paper
-            variant="outlined"
-            sx={{ 
-              p: 2, 
-              bgcolor: 'grey.50', 
-              fontFamily: 'monospace',
-              mb: 3
-            }}
-          >
-            {import.meta.env.VITE_SF_LOGIN_URL || 'Not configured'}
-          </Paper>
-        </Box>
+        <EnvironmentSelector
+          selectedEnvironment={selectedEnvironment}
+          onEnvironmentChange={setSelectedEnvironment}
+        />
 
         <Button
           variant="contained"
           size="large"
-          href="/auth/salesforce"
-          startIcon={<TerminalIcon />}
+          onClick={handleLogin}
+          startIcon={
+            <img 
+              src={selectedEnvironment.icon} 
+              alt="" 
+              style={{ 
+                width: 72,
+                height: 24,
+                objectFit: 'contain'
+              }} 
+            />
+          }
           sx={{ minWidth: 250 }}
         >
-          Continue with Salesforce
+          Continue with {selectedEnvironment.name}
         </Button>
       </Paper>
-
-      {/* Title Section */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Salesforce OAuth Demo
-        </Typography>
-      </Box>
 
       {/* Instructions Section */}
       <Paper sx={{ p: 4 }} elevation={2}>
@@ -198,6 +205,66 @@ const HomePage = () => {
                         }
                       }}
                       primary="SF_LOGIN_URL"
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
+                      primary="SFOA_CLIENT_ID"
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
+                      primary="SFOA_CLIENT_SECRET"
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
+                      primary="SFOA_CALLBACK_URL"
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
+                      primary="SFOA_LOGIN_URL"
                     />
                   </ListItem>
                 </List>

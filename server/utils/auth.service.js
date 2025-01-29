@@ -2,24 +2,62 @@ const passport = require("passport");
 const OAuth2Strategy = require("passport-oauth2");
 
 class AuthService {
+    static getConfig(env) {
+        const isSFOA = env === "sfoa";
+        return {
+            loginUrl: isSFOA
+                ? process.env.SFOA_LOGIN_URL
+                : process.env.SF_LOGIN_URL,
+            clientId: isSFOA
+                ? process.env.SFOA_CLIENT_ID
+                : process.env.SF_CLIENT_ID,
+            clientSecret: isSFOA
+                ? process.env.SFOA_CLIENT_SECRET
+                : process.env.SF_CLIENT_SECRET,
+            callbackUrl: isSFOA
+                ? process.env.SFOA_CALLBACK_URL
+                : process.env.SF_CALLBACK_URL,
+        };
+    }
+
     static initializePassport() {
         passport.use(
             "salesforce",
             new OAuth2Strategy(
                 {
-                    authorizationURL: `${process.env.SF_LOGIN_URL}/services/oauth2/authorize`,
-                    tokenURL: `${process.env.SF_LOGIN_URL}/services/oauth2/token`,
-                    clientID: process.env.SF_CLIENT_ID,
-                    clientSecret: process.env.SF_CLIENT_SECRET,
-                    callbackURL:
-                        process.env.SF_CALLBACK_URL ||
-                        "http://localhost:3000/auth/salesforce/callback",
+                    authorizationURL: (req) => {
+                        const config = this.getConfig(req.query.env);
+                        return `${config.loginUrl}/services/oauth2/authorize`;
+                    },
+                    tokenURL: (req) => {
+                        const config = this.getConfig(req.query.env);
+                        return `${config.loginUrl}/services/oauth2/token`;
+                    },
+                    clientID: (req) => {
+                        const config = this.getConfig(req.query.env);
+                        return config.clientId;
+                    },
+                    clientSecret: (req) => {
+                        const config = this.getConfig(req.query.env);
+                        return config.clientSecret;
+                    },
+                    callbackURL: (req) => {
+                        const config = this.getConfig(req.query.env);
+                        return (
+                            config.callbackUrl ||
+                            `${req.protocol}://${req.get(
+                                "host"
+                            )}/auth/salesforce/callback`
+                        );
+                    },
+                    passReqToCallback: true,
                 },
-                function (accessToken, refreshToken, params, profile, cb) {
+                function (req, accessToken, refreshToken, params, profile, cb) {
                     console.log("OAuth callback received:", {
                         hasAccessToken: !!accessToken,
                         hasInstanceUrl: !!params?.instance_url,
                         instanceUrl: params?.instance_url,
+                        environment: req.query.env,
                     });
 
                     if (!params.instance_url) {
@@ -37,6 +75,7 @@ class AuthService {
                         accessToken,
                         refreshToken,
                         instanceUrl: params.instance_url,
+                        environment: req.query.env,
                         profile,
                     });
                 }
@@ -44,27 +83,16 @@ class AuthService {
         );
 
         passport.serializeUser((user, done) => {
-            console.log("Serializing user:", {
-                hasAccessToken: !!user?.accessToken,
-                hasInstanceUrl: !!user?.instanceUrl,
-                instanceUrl: user?.instanceUrl,
-            });
-            // Explicitly serialize just what we need
             const serialized = {
                 accessToken: user.accessToken,
                 refreshToken: user.refreshToken,
                 instanceUrl: user.instanceUrl,
+                environment: user.environment,
             };
             done(null, serialized);
         });
 
         passport.deserializeUser((serialized, done) => {
-            console.log("Deserializing user:", {
-                hasAccessToken: !!serialized?.accessToken,
-                hasInstanceUrl: !!serialized?.instanceUrl,
-                instanceUrl: serialized?.instanceUrl,
-            });
-            // Return the user object as is
             done(null, serialized);
         });
     }
