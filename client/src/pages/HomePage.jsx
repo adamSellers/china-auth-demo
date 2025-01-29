@@ -12,6 +12,7 @@ import {
   Box,
   CircularProgress,
   Link,
+  Divider,
 } from '@mui/material';
 import {
   GitHub as GitHubIcon,
@@ -35,21 +36,70 @@ const HomePage = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" gutterBottom>
-        Salesforce OAuth Demo
-      </Typography>
+    <Container maxWidth="md" sx={{ py: 6 }}>
+      {/* Login Section */}
+      <Paper 
+        sx={{ 
+          p: 4, 
+          mb: 4, 
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3
+        }} 
+        elevation={2}
+      >
+        <Typography variant="h5" component="h2" gutterBottom>
+          Login with Salesforce
+        </Typography>
 
-      <Paper sx={{ p: 3, mb: 3 }} elevation={2}>
-        <Typography variant="h5" gutterBottom>
+        <Box sx={{ width: '100%', maxWidth: 400 }}>
+          <Typography variant="body1" color="text.secondary" gutterBottom>
+            Connecting to Salesforce environment:
+          </Typography>
+          <Paper
+            variant="outlined"
+            sx={{ 
+              p: 2, 
+              bgcolor: 'grey.50', 
+              fontFamily: 'monospace',
+              mb: 3
+            }}
+          >
+            {import.meta.env.VITE_SF_LOGIN_URL || 'Not configured'}
+          </Paper>
+        </Box>
+
+        <Button
+          variant="contained"
+          size="large"
+          href="/auth/salesforce"
+          startIcon={<TerminalIcon />}
+          sx={{ minWidth: 250 }}
+        >
+          Continue with Salesforce
+        </Button>
+      </Paper>
+
+      {/* Title Section */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h3" component="h1" gutterBottom>
+          Salesforce OAuth Demo
+        </Typography>
+      </Box>
+
+      {/* Instructions Section */}
+      <Paper sx={{ p: 4 }} elevation={2}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
           Deployment Instructions
         </Typography>
 
-        <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
           Deploy to Heroku
         </Typography>
 
-        <List>
+        <List sx={{ mb: 3 }}>
           <ListItem>
             <ListItemIcon>
               <ChevronRightIcon />
@@ -68,28 +118,68 @@ const HomePage = () => {
             </ListItemIcon>
             <ListItemText primary="Connect your GitHub repository to Heroku" />
           </ListItem>
-          <ListItem>
+          <ListItem sx={{ alignItems: 'flex-start' }}>
             <ListItemIcon>
               <ChevronRightIcon />
             </ListItemIcon>
             <ListItemText 
               primary="Configure the following environment variables:"
               secondary={
-                <List dense>
+                <List dense sx={{ pl: 2, pt: 1 }}>
                   <ListItem>
-                    <ListItemText primary="SESSION_SECRET" />
+                    <ListItemText 
+                      primary="SESSION_SECRET"
+                      primaryTypographyProps={{ 
+                        fontFamily: 'monospace',
+                        bgcolor: 'grey.100',
+                        px: 1,
+                        display: 'inline'
+                      }}
+                    />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="SF_CLIENT_ID" />
+                    <ListItemText 
+                      primary="SF_CLIENT_ID"
+                      primaryTypographyProps={{ 
+                        fontFamily: 'monospace',
+                        bgcolor: 'grey.100',
+                        px: 1,
+                        display: 'inline'
+                      }}
+                    />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="SF_CLIENT_SECRET" />
+                    <ListItemText 
+                      primary="SF_CLIENT_SECRET"
+                      primaryTypographyProps={{ 
+                        fontFamily: 'monospace',
+                        bgcolor: 'grey.100',
+                        px: 1,
+                        display: 'inline'
+                      }}
+                    />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="SF_CALLBACK_URL" />
+                    <ListItemText 
+                      primary="SF_CALLBACK_URL"
+                      primaryTypographyProps={{ 
+                        fontFamily: 'monospace',
+                        bgcolor: 'grey.100',
+                        px: 1,
+                        display: 'inline'
+                      }}
+                    />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="SF_LOGIN_URL" />
+                    <ListItemText 
+                      primary="SF_LOGIN_URL"
+                      primaryTypographyProps={{ 
+                        fontFamily: 'monospace',
+                        bgcolor: 'grey.100',
+                        px: 1,
+                        display: 'inline'
+                      }}
+                    />
                   </ListItem>
                 </List>
               }
@@ -103,43 +193,19 @@ const HomePage = () => {
           </ListItem>
         </List>
 
-        <Button
-          variant="text"
-          startIcon={<GitHubIcon />}
-          component={Link}
-          href="https://github.com/yourusername/repo"
-          target="_blank"
-          sx={{ mt: 2 }}
-        >
-          View Example Codebase
-        </Button>
-      </Paper>
+        <Divider sx={{ my: 3 }} />
 
-      <Paper sx={{ p: 3 }} elevation={2}>
-        <Typography variant="h5" gutterBottom>
-          Login with Salesforce
-        </Typography>
-
-        <Box sx={{ my: 3 }}>
-          <Typography variant="body1" color="text.secondary" gutterBottom>
-            Connecting to Salesforce environment:
-          </Typography>
-          <Paper
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Button
             variant="outlined"
-            sx={{ p: 2, bgcolor: 'grey.50', fontFamily: 'monospace' }}
+            startIcon={<GitHubIcon />}
+            component={Link}
+            href="https://github.com/yourusername/repo"
+            target="_blank"
           >
-            {import.meta.env.VITE_SF_LOGIN_URL || 'Not configured'}
-          </Paper>
+            View Example Codebase
+          </Button>
         </Box>
-
-        <Button
-          variant="contained"
-          size="large"
-          href="/auth/salesforce"
-          startIcon={<TerminalIcon />}
-        >
-          Continue with Salesforce
-        </Button>
       </Paper>
     </Container>
   );
