@@ -5,32 +5,35 @@ const axios = require("axios");
 
 router.get(
     "/salesforce",
-    function (req, res, next) {
-        // Store the environment in session before starting OAuth
+    (req, res, next) => {
+        console.log("Initial auth request:", {
+            query: req.query,
+            env: req.query.env,
+            session: req.session,
+        });
+
+        // Store env in session
         if (req.query.env) {
             req.session.oauth_env = req.query.env;
-            console.log("Stored environment in session:", req.query.env);
         }
-        console.log("Starting Salesforce auth for env:", req.query.env);
+
         next();
     },
     passport.authenticate("salesforce", {
         failureRedirect: "/?error=auth_failed",
         session: true,
+        state: true,
     })
 );
 
 router.get(
     "/salesforce/callback",
-    function (req, res, next) {
-        // Restore environment from session
-        if (req.session.oauth_env) {
-            req.query.env = req.session.oauth_env;
-            console.log(
-                "Restored environment from session:",
-                req.session.oauth_env
-            );
-        }
+    (req, res, next) => {
+        console.log("Callback request:", {
+            query: req.query,
+            session: req.session,
+            storedEnv: req.session.oauth_env,
+        });
         next();
     },
     passport.authenticate("salesforce", {
@@ -38,7 +41,7 @@ router.get(
         session: true,
     }),
     (req, res) => {
-        console.log("Auth successful!");
+        console.log("Auth successful with env:", req.session.oauth_env);
         res.redirect("/dashboard");
     }
 );
