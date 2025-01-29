@@ -8,7 +8,8 @@ const cors = require("cors");
 const session = require("express-session");
 const Redis = require("connect-redis");
 const { createClient } = require("redis");
-const authService = require("./utils/auth.service"); // Updated import
+const passport = require("passport");
+const authService = require("./utils/auth.service");
 const authRoutes = require("./routes/auth.routes");
 
 async function initializeApp() {
@@ -32,18 +33,6 @@ async function initializeApp() {
     try {
         await redisClient.connect();
         console.log("Redis client connected successfully");
-
-        // Make redis client available to routes
-        app.set("redisClient", redisClient);
-
-        // Monitor Redis connection
-        redisClient.on("error", (err) => {
-            console.error("Redis Client Error:", err);
-        });
-
-        redisClient.on("reconnecting", () => {
-            console.log("Redis Client Reconnecting");
-        });
     } catch (err) {
         console.error("Redis connection error:", err);
         throw err;
@@ -60,20 +49,25 @@ async function initializeApp() {
         session({
             store: redisStore,
             secret: process.env.SESSION_SECRET || "dev-secret-key",
-            resave: true, // Changed to true to ensure session is saved
-            saveUninitialized: true, // Changed to true to ensure new sessions are saved
+            resave: true,
+            saveUninitialized: true,
             name: "sf.sid",
             cookie: {
                 secure: process.env.NODE_ENV === "production",
                 httpOnly: true,
                 maxAge: 24 * 60 * 60 * 1000,
-                sameSite: "none", // Changed to 'none' to allow cross-site requests
+                sameSite: "none",
             },
-            proxy: true, // Trust the reverse proxy
+            proxy: true,
         })
     );
 
-    // Add session debugging middleware
+    // Initialize passport before using it
+    authService.initializePassport();
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    // Debug middleware (after passport initialization)
     app.use((req, res, next) => {
         // Skip logging for static assets
         if (req.path.match(/\.(js|css|svg|png|ico)$/)) {
@@ -89,21 +83,6 @@ async function initializeApp() {
 
         next();
     });
-
-    // Debug middleware
-    app.use((req, res, next) => {
-        console.log("Session data from apps.js:", {
-            id: req.session.id,
-            oauth_env: req.session.oauth_env,
-            path: req.path,
-        });
-        next();
-    });
-
-    // Initialize passport
-    authService.initializePassport(); // Updated call
-    app.use(require("passport").initialize());
-    app.use(require("passport").session());
 
     // Routes
     app.use("/auth", authRoutes);
