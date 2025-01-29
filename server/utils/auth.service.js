@@ -3,7 +3,6 @@ const OAuth2Strategy = require("passport-oauth2");
 
 class AuthService {
     static initializePassport() {
-        // Clear any existing strategies
         if (passport._strategies.salesforce) {
             passport.unuse("salesforce");
         }
@@ -19,10 +18,12 @@ class AuthService {
                     process.env.SF_CALLBACK_URL ||
                     "http://localhost:3000/auth/salesforce/callback",
                 passReqToCallback: true,
+                state: true,
+                pkce: false,
+                store: true,
             },
             function (req, accessToken, refreshToken, params, profile, cb) {
                 console.log("OAuth callback received:", {
-                    hasSession: !!req.session,
                     oauth_env: req.session?.oauth_env,
                     sessionID: req.sessionID,
                 });
@@ -39,16 +40,13 @@ class AuthService {
             }
         );
 
-        strategy.authorizationParams = function (options) {
-            const env = options?.req?.session?.oauth_env;
+        // Store the original authenticate method
+        const originalAuthenticate = strategy.authenticate;
+        strategy.authenticate = function (req, options) {
+            const env = req.session?.oauth_env;
+            console.log("Authenticate called with env:", env);
 
-            console.log("Configuring OAuth for environment:", {
-                env: env,
-                sessionID: options?.req?.sessionID,
-                hasSession: !!options?.req?.session,
-            });
-
-            // Reset OAuth2 configuration based on environment
+            // Configure OAuth based on environment
             if (env === "sfoa") {
                 this._oauth2._authorizeUrl = `${process.env.SFOA_LOGIN_URL}/services/oauth2/authorize`;
                 this._oauth2._accessTokenUrl = `${process.env.SFOA_LOGIN_URL}/services/oauth2/token`;
@@ -57,9 +55,6 @@ class AuthService {
 
                 console.log("Using SFOA configuration:", {
                     authorizeUrl: this._oauth2._authorizeUrl,
-                    tokenUrl: this._oauth2._accessTokenUrl,
-                    hasClientId: !!this._oauth2._clientId,
-                    hasClientSecret: !!this._oauth2._clientSecret,
                 });
             } else {
                 this._oauth2._authorizeUrl = `${process.env.SF_LOGIN_URL}/services/oauth2/authorize`;
@@ -69,13 +64,11 @@ class AuthService {
 
                 console.log("Using SF configuration:", {
                     authorizeUrl: this._oauth2._authorizeUrl,
-                    tokenUrl: this._oauth2._accessTokenUrl,
-                    hasClientId: !!this._oauth2._clientId,
-                    hasClientSecret: !!this._oauth2._clientSecret,
                 });
             }
 
-            return { env, _ts: Date.now() };
+            // Call the original authenticate method
+            return originalAuthenticate.call(this, req, options);
         };
 
         passport.serializeUser((user, done) => {
