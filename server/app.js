@@ -1,3 +1,4 @@
+// app.js
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
@@ -7,7 +8,7 @@ const cors = require("cors");
 const session = require("express-session");
 const Redis = require("connect-redis");
 const { createClient } = require("redis");
-const AuthService = require("./utils/auth.service");
+const authService = require("./utils/auth.service"); // Updated import
 const authRoutes = require("./routes/auth.routes");
 
 async function initializeApp() {
@@ -66,7 +67,7 @@ async function initializeApp() {
                 secure: process.env.NODE_ENV === "production",
                 httpOnly: true,
                 maxAge: 24 * 60 * 60 * 1000,
-                sameSite: "lax", // Add this to ensure cookie is sent with OAuth redirects
+                sameSite: "lax",
             },
         })
     );
@@ -82,7 +83,7 @@ async function initializeApp() {
     });
 
     // Initialize passport
-    AuthService.initializePassport();
+    authService.initializePassport(); // Updated call
     app.use(require("passport").initialize());
     app.use(require("passport").session());
 

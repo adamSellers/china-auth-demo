@@ -1,5 +1,13 @@
+const passport = require("passport");
+const OAuth2Strategy = require("passport-oauth2");
+const crypto = require("crypto");
+
 class AuthService {
-    static initializePassport() {
+    constructor() {
+        // Instance properties if needed
+    }
+
+    initializePassport() {
         if (passport._strategies.salesforce) {
             passport.unuse("salesforce");
         }
@@ -102,3 +110,7 @@ class AuthService {
         passport.use("salesforce", strategy);
     }
 }
+
+// Create and export a singleton instance
+const authService = new AuthService();
+module.exports = authService;
