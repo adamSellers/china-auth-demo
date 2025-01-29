@@ -4,10 +4,12 @@ const OAuth2Strategy = require("passport-oauth2");
 class AuthService {
     static getConfig(env) {
         const isSFOA = env === "sfoa";
+        const baseUrl = isSFOA
+            ? process.env.SFOA_LOGIN_URL
+            : process.env.SF_LOGIN_URL;
+
         return {
-            loginUrl: isSFOA
-                ? process.env.SFOA_LOGIN_URL
-                : process.env.SF_LOGIN_URL,
+            baseUrl,
             clientId: isSFOA
                 ? process.env.SFOA_CLIENT_ID
                 : process.env.SF_CLIENT_ID,
@@ -18,7 +20,6 @@ class AuthService {
     }
 
     static initializePassport() {
-        // Configure the base strategy
         const strategy = new OAuth2Strategy(
             {
                 authorizationURL: `${process.env.SF_LOGIN_URL}/services/oauth2/authorize`,
@@ -39,12 +40,8 @@ class AuthService {
                 });
 
                 if (!params.instance_url) {
-                    console.error(
-                        "No instance_url received from Salesforce OAuth"
-                    );
-                    return cb(
-                        new Error("No instance URL received from Salesforce")
-                    );
+                    console.error("No instance_url received from OAuth");
+                    return cb(new Error("No instance URL received"));
                 }
 
                 return cb(null, {
@@ -59,7 +56,6 @@ class AuthService {
 
         // Override the OAuth URLs based on the environment parameter
         strategy.authorizationParams = function (options) {
-            // Ensure options and req exist
             if (!options || !options.req) {
                 console.warn(
                     "Options or req object missing in authorizationParams"
@@ -67,18 +63,22 @@ class AuthService {
                 return {};
             }
 
-            // Get environment from the request query, defaulting to 'salesforce'
             const env = options.req.query?.env || "salesforce";
             const config = AuthService.getConfig(env);
 
-            // Update the authorization and token URLs for this request
-            this._oauth2._authorizeUrl = `${config.loginUrl}/services/oauth2/authorize`;
-            this._oauth2._accessTokenUrl = `${config.loginUrl}/services/oauth2/token`;
+            // Set all OAuth endpoints to use the environment-specific base URL
+            this._oauth2._authorizeUrl = `${config.baseUrl}/services/oauth2/authorize`;
+            this._oauth2._accessTokenUrl = `${config.baseUrl}/services/oauth2/token`;
             this._oauth2._clientId = config.clientId;
             this._oauth2._clientSecret = config.clientSecret;
 
+            console.log(`Using OAuth endpoints for ${env}:`, {
+                authorizeUrl: this._oauth2._authorizeUrl,
+                accessTokenUrl: this._oauth2._accessTokenUrl,
+            });
+
             return {
-                env: env, // Pass the environment to the callback
+                env: env,
             };
         };
 
