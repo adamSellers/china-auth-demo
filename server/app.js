@@ -60,21 +60,37 @@ async function initializeApp() {
         session({
             store: redisStore,
             secret: process.env.SESSION_SECRET || "dev-secret-key",
-            resave: false,
-            saveUninitialized: false,
+            resave: true, // Changed to true to ensure session is saved
+            saveUninitialized: true, // Changed to true to ensure new sessions are saved
             name: "sf.sid",
             cookie: {
                 secure: process.env.NODE_ENV === "production",
                 httpOnly: true,
                 maxAge: 24 * 60 * 60 * 1000,
-                sameSite: "lax",
+                sameSite: "none", // Changed to 'none' to allow cross-site requests
             },
+            proxy: true, // Trust the reverse proxy
         })
     );
 
+    // Add session debugging middleware
+    app.use((req, res, next) => {
+        console.log("Session Debug:", {
+            id: req.sessionID,
+            cookie: req.session?.cookie,
+            oauth_env: req.session?.oauth_env,
+            headers: {
+                origin: req.headers.origin,
+                referer: req.headers.referer,
+                host: req.headers.host,
+            },
+        });
+        next();
+    });
+
     // Debug middleware
     app.use((req, res, next) => {
-        console.log("Session data:", {
+        console.log("Session data from apps.js:", {
             id: req.session.id,
             oauth_env: req.session.oauth_env,
             path: req.path,
