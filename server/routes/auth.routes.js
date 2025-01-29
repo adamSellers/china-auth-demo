@@ -69,27 +69,24 @@ router.get("/logout", async (req, res) => {
             // 4. Clear passport login
             req.logout(() => {
                 // 5. Clear all cookies
-                res.clearCookie("connect.sid");
+                res.clearCookie("sf.sid");
 
-                // 6. Construct Salesforce logout URL with immediate redirect back
-                const appUrl = `${req.protocol}://${req.get("host")}`;
-                const logoutUrl = `${baseUrl}/secur/logout.jsp?retURL=${encodeURIComponent(
-                    appUrl
-                )}`;
+                // 6. Instead of redirecting to Salesforce logout, just redirect home
+                res.redirect("/");
 
-                console.log("Performing logout:", {
-                    baseUrl,
-                    logoutUrl,
-                    environment: req.user?.environment,
-                });
-
-                // 7. Redirect to Salesforce logout
-                res.redirect(logoutUrl);
+                // Log the user out of Salesforce in the background
+                try {
+                    // This will still log the user out of Salesforce, but won't redirect
+                    axios.get(`${baseUrl}/secur/logout.jsp`).catch(() => {
+                        // Ignore any errors as this is a background request
+                    });
+                } catch (error) {
+                    // Ignore any errors as this is a background request
+                }
             });
         });
     } catch (error) {
         console.error("Error during logout:", error);
-        // Even if there's an error, try to redirect home
         res.redirect("/");
     }
 });
