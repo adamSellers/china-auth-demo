@@ -12,24 +12,32 @@ router.get(
             session: req.session,
         });
 
-        // Store env in session
+        // Store env in session and wait for save to complete
         if (req.query.env) {
             req.session.oauth_env = req.query.env;
-            // Force session save before continuing
-            req.session.save((err) => {
+
+            // Force session save and wait for completion
+            return req.session.save((err) => {
                 if (err) {
-                    console.error("Error saving session:", err);
+                    console.error("Session save error:", err);
                     return next(err);
                 }
-                // Pass session to strategy via custom headers
-                req.authInfo = {
-                    session: req.session,
-                };
+                console.log(
+                    "Session saved, oauth_env is now:",
+                    req.session.oauth_env
+                );
                 next();
             });
-        } else {
-            next();
         }
+        next();
+    },
+    (req, res, next) => {
+        // Double check the session after save
+        console.log("Pre-auth session check:", {
+            oauth_env: req.session.oauth_env,
+            sessionID: req.sessionID,
+        });
+        next();
     },
     passport.authenticate("salesforce", {
         failureRedirect: "/?error=auth_failed",

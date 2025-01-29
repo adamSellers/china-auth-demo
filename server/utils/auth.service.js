@@ -21,6 +21,12 @@ class AuthService {
                 passReqToCallback: true,
             },
             function (req, accessToken, refreshToken, params, profile, cb) {
+                console.log("OAuth callback received:", {
+                    hasSession: !!req.session,
+                    oauth_env: req.session?.oauth_env,
+                    sessionID: req.sessionID,
+                });
+
                 if (!params.instance_url) {
                     return cb(new Error("No instance URL received"));
                 }
@@ -33,30 +39,45 @@ class AuthService {
             }
         );
 
-        // Override authorizationParams instead of authenticate
         strategy.authorizationParams = function (options) {
             const env = options?.req?.session?.oauth_env;
 
+            console.log("Configuring OAuth for environment:", {
+                env: env,
+                sessionID: options?.req?.sessionID,
+                hasSession: !!options?.req?.session,
+            });
+
+            // Reset OAuth2 configuration based on environment
             if (env === "sfoa") {
                 this._oauth2._authorizeUrl = `${process.env.SFOA_LOGIN_URL}/services/oauth2/authorize`;
                 this._oauth2._accessTokenUrl = `${process.env.SFOA_LOGIN_URL}/services/oauth2/token`;
                 this._oauth2._clientId = process.env.SFOA_CLIENT_ID;
                 this._oauth2._clientSecret = process.env.SFOA_CLIENT_SECRET;
+
+                console.log("Using SFOA configuration:", {
+                    authorizeUrl: this._oauth2._authorizeUrl,
+                    tokenUrl: this._oauth2._accessTokenUrl,
+                    hasClientId: !!this._oauth2._clientId,
+                    hasClientSecret: !!this._oauth2._clientSecret,
+                });
             } else {
                 this._oauth2._authorizeUrl = `${process.env.SF_LOGIN_URL}/services/oauth2/authorize`;
                 this._oauth2._accessTokenUrl = `${process.env.SF_LOGIN_URL}/services/oauth2/token`;
                 this._oauth2._clientId = process.env.SF_CLIENT_ID;
                 this._oauth2._clientSecret = process.env.SF_CLIENT_SECRET;
+
+                console.log("Using SF configuration:", {
+                    authorizeUrl: this._oauth2._authorizeUrl,
+                    tokenUrl: this._oauth2._accessTokenUrl,
+                    hasClientId: !!this._oauth2._clientId,
+                    hasClientSecret: !!this._oauth2._clientSecret,
+                });
             }
 
-            return {
-                env,
-                // Add a timestamp to prevent caching
-                _ts: Date.now(),
-            };
+            return { env, _ts: Date.now() };
         };
 
-        // Simplified serialization
         passport.serializeUser((user, done) => {
             done(null, {
                 accessToken: user.accessToken,
