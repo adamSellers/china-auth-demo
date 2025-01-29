@@ -31,6 +31,18 @@ async function initializeApp() {
     try {
         await redisClient.connect();
         console.log("Redis client connected successfully");
+
+        // Make redis client available to routes
+        app.set("redisClient", redisClient);
+
+        // Monitor Redis connection
+        redisClient.on("error", (err) => {
+            console.error("Redis Client Error:", err);
+        });
+
+        redisClient.on("reconnecting", () => {
+            console.log("Redis Client Reconnecting");
+        });
     } catch (err) {
         console.error("Redis connection error:", err);
         throw err;

@@ -3,52 +3,78 @@ const passport = require("passport");
 const router = express.Router();
 const axios = require("axios");
 
+// Add state management helpers
+const STATE_PREFIX = "oauth_state:";
+const STATE_TTL = 60 * 5; // 5 minutes in seconds
+
+const storeOAuthState = async (redisClient, state, env) => {
+    const key = `${STATE_PREFIX}${state}`;
+    await redisClient.set(key, env, { EX: STATE_TTL });
+};
+
+const getOAuthState = async (redisClient, state) => {
+    const key = `${STATE_PREFIX}${state}`;
+    return await redisClient.get(key);
+};
+
 router.get(
     "/salesforce",
-    (req, res, next) => {
-        console.log("Initial auth request:", {
-            query: req.query,
-            env: req.query.env,
-            session: req.session,
-        });
+    async (req, res, next) => {
+        try {
+            // Generate state parameter
+            const state = crypto.randomBytes(16).toString("hex");
 
-        if (req.query.env) {
-            req.session.oauth_env = req.query.env;
-            // Force session save and wait for completion
-            return new Promise((resolve, reject) => {
-                req.session.save((err) => {
-                    if (err) {
-                        console.error("Session save error:", err);
-                        return reject(err);
-                    }
-                    console.log(
-                        "Session saved, oauth_env is now:",
-                        req.session.oauth_env
-                    );
-                    resolve();
+            // Store environment in Redis with state as key
+            if (req.query.env) {
+                await storeOAuthState(
+                    req.app.get("redisClient"),
+                    state,
+                    req.query.env
+                );
+                console.log("Stored OAuth state:", {
+                    state,
+                    env: req.query.env,
                 });
-            })
-                .then(() => next())
-                .catch(next);
+            }
+
+            // Add state to session and continue
+            req.session.oauth_state = state;
+            req.session.oauth_env = req.query.env;
+
+            // Pass state to passport
+            req.authInfo = { state };
+            next();
+        } catch (error) {
+            console.error("Error in auth preparation:", error);
+            res.redirect("/?error=auth_failed");
         }
-        next();
     },
     passport.authenticate("salesforce", {
         failureRedirect: "/?error=auth_failed",
         session: true,
-        state: true,
     })
 );
 
 router.get(
     "/salesforce/callback",
-    (req, res, next) => {
-        console.log("Callback request:", {
-            query: req.query,
-            session: req.session,
-            storedEnv: req.session.oauth_env,
-        });
-        next();
+    async (req, res, next) => {
+        try {
+            // Retrieve environment from state
+            const state = req.query.state;
+            const env = await getOAuthState(req.app.get("redisClient"), state);
+
+            if (env) {
+                req.session.oauth_env = env;
+                console.log("Retrieved OAuth state:", { state, env });
+                await req.session.save();
+            } else {
+                console.warn("No OAuth state found for:", state);
+            }
+            next();
+        } catch (error) {
+            console.error("Error in callback preparation:", error);
+            next(error);
+        }
     },
     passport.authenticate("salesforce", {
         failureRedirect: "/?error=auth_failed",
@@ -59,7 +85,6 @@ router.get(
         res.redirect("/dashboard");
     }
 );
-
 router.get("/logout", async (req, res) => {
     try {
         // 1. Get the correct base URL based on current environment
