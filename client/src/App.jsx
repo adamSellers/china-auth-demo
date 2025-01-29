@@ -3,8 +3,9 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
 import HomePage from './pages/HomePage';
 import Dashboard from './pages/Dashboard';
+import Layout from './components/Layout';
 
-// Create a custom theme (optional)
+// Create a custom theme
 const theme = createTheme({
   palette: {
     primary: {
@@ -12,6 +13,17 @@ const theme = createTheme({
     },
     background: {
       default: '#f5f5f5',
+    },
+  },
+  components: {
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          '@media (min-width: 1200px)': {
+            maxWidth: '1200px',
+          },
+        },
+      },
     },
   },
 });
@@ -22,10 +34,12 @@ const App = () => {
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-          </Routes>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+            </Routes>
+          </Layout>
         </Router>
       </AuthProvider>
     </ThemeProvider>

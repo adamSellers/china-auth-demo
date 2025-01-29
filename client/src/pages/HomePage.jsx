@@ -1,7 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Paper,
   Button,
@@ -36,7 +35,7 @@ const HomePage = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
+    <Box sx={{ py: 4 }}>
       {/* Login Section */}
       <Paper 
         sx={{ 
@@ -207,7 +206,7 @@ const HomePage = () => {
           </Button>
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 };
 
