@@ -4,9 +4,12 @@ const OAuth2Strategy = require("passport-oauth2");
 class AuthService {
     static getConfig(env) {
         const isSFOA = env === "sfoa";
+        console.log(`in AuthService, isSFOA is: ${this.isSFOA}`);
         const baseUrl = isSFOA
             ? process.env.SFOA_LOGIN_URL
             : process.env.SF_LOGIN_URL;
+
+        console.log(`in AuthService, baseUrl is: ${this.baseUrl}`);
 
         return {
             baseUrl,

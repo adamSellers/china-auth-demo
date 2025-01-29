@@ -38,12 +38,33 @@ router.get(
     }
 );
 
-router.get("/logout", (req, res) => {
+router.get("/logout", async (req, res) => {
+    try {
+        if (req.user?.accessToken) {
+            const baseUrl =
+                req.user.environment === "sfoa"
+                    ? process.env.SFOA_LOGIN_URL
+                    : process.env.SF_LOGIN_URL;
+
+            // First, revoke the Salesforce access token
+            await axios.post(`${baseUrl}/services/oauth2/revoke`, null, {
+                params: {
+                    token: req.user.accessToken,
+                },
+            });
+        }
+    } catch (error) {
+        console.error("Error revoking Salesforce token:", error);
+        // Continue with local logout even if token revocation fails
+    }
+
+    // Destroy the local session
     req.session.destroy((err) => {
         if (err) {
             console.error("Error destroying session:", err);
             return res.status(500).json({ error: "Logout failed" });
         }
+
         // Clear the login session
         req.logout(() => {
             // Redirect to home page
