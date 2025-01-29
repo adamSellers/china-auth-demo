@@ -26,16 +26,26 @@ class AuthService {
                 console.log("OAuth callback received:", {
                     oauth_env: req.session?.oauth_env,
                     sessionID: req.sessionID,
+                    session: req.session,
                 });
 
                 if (!params.instance_url) {
                     return cb(new Error("No instance URL received"));
                 }
 
+                // Default to 'salesforce' if env is missing, but log the issue
+                const environment = req.session?.oauth_env || "salesforce";
+                if (!req.session?.oauth_env) {
+                    console.warn(
+                        "Warning: oauth_env missing in session during callback"
+                    );
+                }
+
                 return cb(null, {
                     accessToken,
                     refreshToken,
-                    environment: req.session?.oauth_env || "salesforce",
+                    environment,
+                    instance_url: params.instance_url,
                 });
             }
         );

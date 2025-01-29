@@ -54,6 +54,7 @@ async function initializeApp() {
                 secure: process.env.NODE_ENV === "production",
                 httpOnly: true,
                 maxAge: 24 * 60 * 60 * 1000,
+                sameSite: "lax", // Add this to ensure cookie is sent with OAuth redirects
             },
         })
     );
