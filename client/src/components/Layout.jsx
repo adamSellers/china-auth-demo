@@ -1,12 +1,16 @@
 import { Box, Container, Typography, Link } from '@mui/material';
+import { styled } from '@mui/material/styles';
+
+// Create a styled wrapper to handle the layout without relying on body flex
+const LayoutWrapper = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: '100vh'
+});
 
 const Layout = ({ children }) => {
   return (
-    <Box sx={{ 
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <LayoutWrapper>
       {/* Main content */}
       <Container 
         fixed
@@ -52,7 +56,7 @@ const Layout = ({ children }) => {
           </Box>
         </Container>
       </Box>
-    </Box>
+    </LayoutWrapper>
   );
 };
 

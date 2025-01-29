@@ -25,6 +25,13 @@ const theme = createTheme({
         },
       },
     },
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          display: 'block', // Override the flex display
+        },
+      },
+    },
   },
 });
 
