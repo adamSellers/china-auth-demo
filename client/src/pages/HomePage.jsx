@@ -38,6 +38,10 @@ const HomePage = () => {
   }
 
   const handleLogin = () => {
+    // clear any existing sessions first
+    sessionStorage.clear();
+    localStorage.clear();
+
     // Store the selected environment in sessionStorage
     sessionStorage.setItem('selectedEnvironment', JSON.stringify(selectedEnvironment));
     
