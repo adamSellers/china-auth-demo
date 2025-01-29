@@ -3,19 +3,31 @@ const passport = require("passport");
 const router = express.Router();
 const axios = require("axios");
 
-router.get("/salesforce", passport.authenticate("salesforce"));
+router.get(
+    "/salesforce",
+    function (req, res, next) {
+        console.log("Starting Salesforce auth for env:", req.query.env);
+        next();
+    },
+    passport.authenticate("salesforce", {
+        failureRedirect: "/?error=auth_failed",
+        session: true,
+    })
+);
 
 router.get(
     "/salesforce/callback",
-    passport.authenticate("salesforce", { failureRedirect: "/login" }),
+    passport.authenticate("salesforce", {
+        failureRedirect: "/?error=auth_failed",
+        session: true,
+    }),
     (req, res) => {
-        console.log("auth successful!");
-        res.redirect("/");
+        console.log("Auth successful!");
+        res.redirect("/dashboard");
     }
 );
 
 router.get("/logout", (req, res) => {
-    // Properly destroy the session
     req.session.destroy((err) => {
         if (err) {
             console.error("Error destroying session:", err);
@@ -36,7 +48,11 @@ router.get("/user-info", async (req, res) => {
 
     try {
         const response = await axios.get(
-            `${process.env.SF_LOGIN_URL}/services/oauth2/userinfo`,
+            `${
+                req.user.environment === "sfoa"
+                    ? process.env.SFOA_LOGIN_URL
+                    : process.env.SF_LOGIN_URL
+            }/services/oauth2/userinfo`,
             {
                 headers: {
                     Authorization: `Bearer ${req.user.accessToken}`,

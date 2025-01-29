@@ -40,42 +40,35 @@ if (process.env.NODE_ENV === "production") {
     // Serve static files from the React app
     app.use(express.static(path.join(__dirname, "../client/dist")));
 
-    // Set up error handling for static files
-    app.use((err, req, res, next) => {
-        if (err.code === "ENOENT") {
-            res.status(404).json({ message: "Asset not found" });
-        } else {
-            next(err);
-        }
-    });
-
     // Handle React routing, return all requests to React app
-    app.get("*", function (req, res) {
+    app.get("*", function (req, res, next) {
+        // Skip API routes
+        if (req.path.startsWith("/auth/")) {
+            return next();
+        }
         res.sendFile(path.join(__dirname, "../client/dist/index.html"));
-    });
-} else {
-    // Development error handler
-    app.use(function (req, res, next) {
-        next(createError(404));
     });
 }
 
 // Error handler
 app.use(function (err, req, res, next) {
+    console.error("Error occurred:", err);
+
+    // Determine if this is an OAuth 2.0 error
+    if (err.name === "AuthorizationError" || err.name === "TokenError") {
+        return res.redirect("/?error=" + encodeURIComponent(err.message));
+    }
+
     // Set locals, only providing error in development
     res.locals.message = err.message;
     res.locals.error = req.app.get("env") === "development" ? err : {};
 
     // Send error response
     res.status(err.status || 500);
-    if (req.accepts("html")) {
-        res.render("error");
-    } else {
-        res.json({
-            message: err.message,
-            error: req.app.get("env") === "development" ? err : {},
-        });
-    }
+    res.json({
+        message: err.message,
+        error: req.app.get("env") === "development" ? err : {},
+    });
 });
 
 module.exports = app;
