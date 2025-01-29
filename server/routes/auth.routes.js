@@ -15,9 +15,21 @@ router.get(
         // Store env in session
         if (req.query.env) {
             req.session.oauth_env = req.query.env;
+            // Force session save before continuing
+            req.session.save((err) => {
+                if (err) {
+                    console.error("Error saving session:", err);
+                    return next(err);
+                }
+                // Pass session to strategy via custom headers
+                req.authInfo = {
+                    session: req.session,
+                };
+                next();
+            });
+        } else {
+            next();
         }
-
-        next();
     },
     passport.authenticate("salesforce", {
         failureRedirect: "/?error=auth_failed",
@@ -99,7 +111,6 @@ router.get("/logout", async (req, res) => {
     }
 });
 
-// Add a route to check session status
 router.get("/session-status", (req, res) => {
     res.json({
         isAuthenticated: req.isAuthenticated(),

@@ -20,7 +20,13 @@ class AuthService {
                     hasQuery: !!req.query,
                     env: req.query?.env,
                     session: req.session,
+                    authInfo: req.authInfo,
                 });
+
+                // Store session in OAuth2 custom headers for access in authorizationParams
+                this._oauth2._customHeaders = {
+                    session: req.session,
+                };
 
                 if (!params.instance_url) {
                     return cb(new Error("No instance URL received"));
@@ -30,31 +36,22 @@ class AuthService {
                     accessToken,
                     refreshToken,
                     instanceUrl: params.instance_url,
-                    environment: req.query?.env,
+                    environment: req.session.oauth_env,
                 });
             }
         );
 
         // Override the OAuth URLs based on the environment parameter
         strategy.authorizationParams = function (options) {
-            // Debug log the entire options object
-            console.log(
-                "Authorization params options:",
-                JSON.stringify(options, null, 2)
-            );
+            // Access the environment from session instead of request
+            const session = this._oauth2._customHeaders?.session;
+            console.log("Session in authorizationParams:", session);
 
-            const env = options?.req?.query?.env;
-            console.log("Environment value:", env);
-            console.log("Options chain:", {
-                hasOptions: !!options,
-                hasReq: !!options?.req,
-                hasQuery: !!options?.req?.query,
-                queryContent: options?.req?.query,
-            });
+            const env = session?.oauth_env;
+            console.log("Environment value from session:", env);
 
             // If env is undefined, check session
-            const finalEnv =
-                env || options?.req?.session?.oauth_env || "salesforce";
+            const finalEnv = env || "salesforce";
             console.log("Final environment value:", finalEnv);
 
             // Explicitly handle SFOA vs SF
