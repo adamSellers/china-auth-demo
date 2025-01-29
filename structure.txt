@@ -31,9 +31,14 @@ client
 │   ├── App.css
 │   ├── App.jsx
 │   ├── assets
-│   │   └── react.svg
+│   │   ├── react.svg
+│   │   ├── sf.png
+│   │   └── sfoa.png
 │   ├── components
+│   │   ├── EnvironmentSelector.jsx
 │   │   └── Layout.jsx
+│   ├── config
+│   │   └── environments.js
 │   ├── context
 │   │   └── AuthContext.jsx
 │   ├── index.css

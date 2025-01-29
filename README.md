@@ -9,29 +9,6 @@ This application demonstrates OAuth 2.0 integration with Salesforce, supporting 
 ## Project Structure
 
 ```
-client
-├── .gitignore
-├── README.md
-├── eslint.config.js
-├── index.html
-├── package-lock.json
-├── package.json
-├── public
-│   └── vite.svg
-├── src
-│   ├── App.css
-│   ├── App.jsx
-│   ├── assets
-│   │   └── react.svg
-│   ├── components
-│   ├── context
-│   │   └── AuthContext.jsx
-│   ├── index.css
-│   ├── main.jsx
-│   └── pages
-│       ├── Dashboard.jsx
-│       └── HomePage.jsx
-└── vite.config.js
 server
 ├── .env
 ├── app.js
@@ -45,14 +22,43 @@ server
 │   └── stylesheets
 │       └── style.css
 ├── routes
-│   ├── auth.routes.js
-│   └── index.js
+│   └── auth.routes.js
 ├── utils
 │   └── auth.service.js
 └── views
     ├── error.pug
     ├── index.pug
     └── layout.pug
+client
+├── .gitignore
+├── README.md
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── public
+│   └── vite.svg
+├── src
+│   ├── App.css
+│   ├── App.jsx
+│   ├── assets
+│   │   ├── react.svg
+│   │   ├── sf.png
+│   │   └── sfoa.png
+│   ├── components
+│   │   ├── EnvironmentSelector.jsx
+│   │   └── Layout.jsx
+│   ├── config
+│   │   └── environments.js
+│   ├── context
+│   │   └── AuthContext.jsx
+│   ├── index.css
+│   ├── main.jsx
+│   └── pages
+│       ├── Dashboard.jsx
+│       └── HomePage.jsx
+└── vite.config.js
+
 ```
 
 ## Manual Deployment Steps

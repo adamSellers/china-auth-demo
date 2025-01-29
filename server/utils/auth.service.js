@@ -59,8 +59,16 @@ class AuthService {
 
         // Override the OAuth URLs based on the environment parameter
         strategy.authorizationParams = function (options) {
-            // Get environment from the request query
-            const env = options.req.query.env || "salesforce";
+            // Ensure options and req exist
+            if (!options || !options.req) {
+                console.warn(
+                    "Options or req object missing in authorizationParams"
+                );
+                return {};
+            }
+
+            // Get environment from the request query, defaulting to 'salesforce'
+            const env = options.req.query?.env || "salesforce";
             const config = AuthService.getConfig(env);
 
             // Update the authorization and token URLs for this request

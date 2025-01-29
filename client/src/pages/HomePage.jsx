@@ -40,8 +40,11 @@ const HomePage = () => {
   const handleLogin = () => {
     // Store the selected environment in sessionStorage
     sessionStorage.setItem('selectedEnvironment', JSON.stringify(selectedEnvironment));
-    window.location.href = `/auth/salesforce?env=${selectedEnvironment.id}`;
-  };
+    
+    // Ensure the environment ID is properly encoded in the URL
+    const envParam = encodeURIComponent(selectedEnvironment.id);
+    window.location.href = `/auth/salesforce?env=${envParam}`;
+};
 
   return (
     <Box sx={{ py: 4 }}>

@@ -6,6 +6,10 @@ const axios = require("axios");
 router.get(
     "/salesforce",
     function (req, res, next) {
+        // Ensure env parameter exists
+        if (!req.query.env) {
+            req.query.env = "salesforce"; // Set default environment
+        }
         console.log("Starting Salesforce auth for env:", req.query.env);
         next();
     },
@@ -17,6 +21,13 @@ router.get(
 
 router.get(
     "/salesforce/callback",
+    function (req, res, next) {
+        // Ensure env parameter is preserved in callback
+        if (!req.query.env && req.session.env) {
+            req.query.env = req.session.env;
+        }
+        next();
+    },
     passport.authenticate("salesforce", {
         failureRedirect: "/?error=auth_failed",
         session: true,
