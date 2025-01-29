@@ -127,57 +127,77 @@ const HomePage = () => {
                 <List dense sx={{ pl: 2, pt: 1 }}>
                   <ListItem>
                     <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
                       primary="SESSION_SECRET"
-                      primaryTypographyProps={{ 
-                        fontFamily: 'monospace',
-                        bgcolor: 'grey.100',
-                        px: 1,
-                        display: 'inline'
-                      }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
                       primary="SF_CLIENT_ID"
-                      primaryTypographyProps={{ 
-                        fontFamily: 'monospace',
-                        bgcolor: 'grey.100',
-                        px: 1,
-                        display: 'inline'
-                      }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
                       primary="SF_CLIENT_SECRET"
-                      primaryTypographyProps={{ 
-                        fontFamily: 'monospace',
-                        bgcolor: 'grey.100',
-                        px: 1,
-                        display: 'inline'
-                      }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText 
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
+                      }}
                       primary="SF_CALLBACK_URL"
-                      primaryTypographyProps={{ 
-                        fontFamily: 'monospace',
-                        bgcolor: 'grey.100',
-                        px: 1,
-                        display: 'inline'
-                      }}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText 
-                      primary="SF_LOGIN_URL"
-                      primaryTypographyProps={{ 
-                        fontFamily: 'monospace',
-                        bgcolor: 'grey.100',
-                        px: 1,
-                        display: 'inline'
+                      slotProps={{
+                        primary: { 
+                          sx: { 
+                            fontFamily: 'monospace',
+                            bgcolor: 'grey.100',
+                            px: 1,
+                            display: 'inline'
+                          }
+                        }
                       }}
+                      primary="SF_LOGIN_URL"
                     />
                   </ListItem>
                 </List>
