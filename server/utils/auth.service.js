@@ -4,6 +4,11 @@ const OAuth2Strategy = require("passport-oauth2");
 
 class AuthService {
     initializePassport() {
+        // Remove any existing strategy
+        if (passport._strategies.salesforce) {
+            passport.unuse("salesforce");
+        }
+
         const strategy = new OAuth2Strategy(
             {
                 authorizationURL:
@@ -22,28 +27,29 @@ class AuthService {
                     return cb(new Error("No instance URL received"));
                 }
 
+                const environment = req.session?.oauth_env || "salesforce";
                 return cb(null, {
                     accessToken,
                     refreshToken,
-                    environment: req.session?.oauth_env || "salesforce",
+                    environment,
                     instance_url: params.instance_url,
                 });
             }
         );
 
-        // Store the original authenticate method
+        // Override authenticate method for dynamic configuration
         const originalAuthenticate = strategy.authenticate;
         strategy.authenticate = function (req, options) {
             const env = req.session?.oauth_env;
-            console.log("Authenticate called with env:", env);
 
-            // Configure OAuth based on environment
             if (env === "sfoa") {
+                console.log("Using SFOA configuration");
                 this._oauth2._authorizeUrl = `${process.env.SFOA_LOGIN_URL}/services/oauth2/authorize`;
                 this._oauth2._accessTokenUrl = `${process.env.SFOA_LOGIN_URL}/services/oauth2/token`;
                 this._oauth2._clientId = process.env.SFOA_CLIENT_ID;
                 this._oauth2._clientSecret = process.env.SFOA_CLIENT_SECRET;
             } else {
+                console.log("Using SF configuration");
                 this._oauth2._authorizeUrl = `${process.env.SF_LOGIN_URL}/services/oauth2/authorize`;
                 this._oauth2._accessTokenUrl = `${process.env.SF_LOGIN_URL}/services/oauth2/token`;
                 this._oauth2._clientId = process.env.SF_CLIENT_ID;
@@ -53,17 +59,25 @@ class AuthService {
             return originalAuthenticate.call(this, req, options);
         };
 
+        // User serialization
         passport.serializeUser((user, done) => {
-            done(null, user);
+            done(null, {
+                accessToken: user.accessToken,
+                environment: user.environment,
+                instance_url: user.instance_url,
+            });
         });
 
+        // User deserialization
         passport.deserializeUser((user, done) => {
             done(null, user);
         });
 
+        // Register the strategy
         passport.use("salesforce", strategy);
     }
 }
 
+// Export a singleton instance
 const authService = new AuthService();
 module.exports = authService;

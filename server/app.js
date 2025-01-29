@@ -75,16 +75,18 @@ async function initializeApp() {
 
     // Add session debugging middleware
     app.use((req, res, next) => {
-        console.log("Session Debug:", {
-            id: req.sessionID,
-            cookie: req.session?.cookie,
-            oauth_env: req.session?.oauth_env,
-            headers: {
-                origin: req.headers.origin,
-                referer: req.headers.referer,
-                host: req.headers.host,
-            },
+        // Skip logging for static assets
+        if (req.path.match(/\.(js|css|svg|png|ico)$/)) {
+            return next();
+        }
+
+        // Simplified session logging
+        console.log("Session:", {
+            path: req.path,
+            env: req.session?.oauth_env,
+            authenticated: req.isAuthenticated(),
         });
+
         next();
     });
 

@@ -10,17 +10,14 @@ const STATE_TTL = 60 * 5; // 5 minutes in seconds
 router.get(
     "/salesforce",
     (req, res, next) => {
-        // Store env in session
+        console.log("OAuth Start:", {
+            env: req.query.env,
+            authenticated: req.isAuthenticated(),
+        });
+
         if (req.query.env) {
             req.session.oauth_env = req.query.env;
-            // Force session save
-            return req.session.save((err) => {
-                if (err) {
-                    console.error("Session save error:", err);
-                    return next(err);
-                }
-                next();
-            });
+            return req.session.save(next);
         }
         next();
     },
@@ -32,11 +29,22 @@ router.get(
 
 router.get(
     "/salesforce/callback",
+    (req, res, next) => {
+        console.log("OAuth Callback:", {
+            env: req.session?.oauth_env,
+            authenticated: req.isAuthenticated(),
+        });
+        next();
+    },
     passport.authenticate("salesforce", {
         failureRedirect: "/?error=auth_failed",
         session: true,
     }),
     (req, res) => {
+        console.log("Auth Success:", {
+            env: req.session?.oauth_env,
+            user: req.user?.environment,
+        });
         res.redirect("/dashboard");
     }
 );
