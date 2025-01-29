@@ -20,31 +20,63 @@ async function initializeApp() {
     app.use(express.urlencoded({ extended: false }));
     app.use(cookieParser());
 
-    // Initialize redis client
+    // Initialize redis client with retry logic
     const redisClient = createClient({
         url: process.env.REDIS_URL,
         socket: {
             tls: process.env.NODE_ENV === "production",
+            rejectUnauthorized: false, // Accept self-signed certificates
+        },
+        retry_strategy: function (options) {
+            if (options.error && options.error.code === "ECONNREFUSED") {
+                // End reconnecting on a specific error
+                return new Error("The server refused the connection");
+            }
+            if (options.total_retry_time > 1000 * 60 * 60) {
+                // End reconnecting after a specific timeout
+                return new Error("Retry time exhausted");
+            }
+            if (options.attempt > 10) {
+                // End reconnecting with built in error
+                return undefined;
+            }
+            // Reconnect after
+            return Math.min(options.attempt * 100, 3000);
         },
     });
 
-    // Initialize connection
-    await redisClient.connect();
+    try {
+        // Initialize connection
+        await redisClient.connect();
+        console.log("Redis client connected successfully");
+    } catch (err) {
+        console.error("Redis connection error:", err);
+        // Fall back to memory session store if Redis fails
+        console.log("Falling back to memory session store");
+    }
 
     redisClient.on("error", (err) => console.log("Redis Client Error", err));
     redisClient.on("connect", () => console.log("Connected to Redis"));
+    redisClient.on("reconnecting", () =>
+        console.log("Redis client reconnecting")
+    );
 
-    // Create RedisStore
-    const RedisStore = connectRedis(session);
+    // Create session store based on Redis connection status
+    let sessionStore;
+    if (redisClient.isOpen) {
+        const RedisStore = connectRedis(session);
+        sessionStore = new RedisStore({
+            client: redisClient,
+            prefix: "sf-oauth:",
+            ttl: 86400,
+        });
+        console.log("Using Redis session store");
+    }
 
     // Session middleware (must be before passport)
     app.use(
         session({
-            store: new RedisStore({
-                client: redisClient,
-                prefix: "sf-oauth:",
-                ttl: 86400,
-            }),
+            store: sessionStore, // Will fall back to MemoryStore if sessionStore is undefined
             secret: process.env.SESSION_SECRET || "dev-secret-key",
             resave: false,
             saveUninitialized: false,
@@ -67,6 +99,7 @@ async function initializeApp() {
                 oauth_env: req.session.oauth_env,
                 path: req.path,
                 method: req.method,
+                store: req.session.store ? "redis" : "memory",
             });
             oldEnd.apply(this, arguments);
         };
@@ -113,5 +146,4 @@ async function initializeApp() {
     return app;
 }
 
-// Export the initialization function
 module.exports = initializeApp;
