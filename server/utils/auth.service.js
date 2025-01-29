@@ -4,12 +4,9 @@ const OAuth2Strategy = require("passport-oauth2");
 class AuthService {
     static getConfig(env) {
         const isSFOA = env === "sfoa";
-        console.log(`in AuthService, isSFOA is: ${this.isSFOA}`);
         const baseUrl = isSFOA
             ? process.env.SFOA_LOGIN_URL
             : process.env.SF_LOGIN_URL;
-
-        console.log(`in AuthService, baseUrl is: ${this.baseUrl}`);
 
         return {
             baseUrl,
@@ -33,13 +30,20 @@ class AuthService {
                     process.env.SF_CALLBACK_URL ||
                     "http://localhost:3000/auth/salesforce/callback",
                 passReqToCallback: true,
+                state: true, // Enable state parameter for CSRF protection
             },
             function (req, accessToken, refreshToken, params, profile, cb) {
+                // Get environment from session or query
+                const env =
+                    req.session?.oauth_env || req.query?.env || "salesforce";
+
                 console.log("OAuth callback received:", {
                     hasAccessToken: !!accessToken,
                     hasInstanceUrl: !!params?.instance_url,
                     instanceUrl: params?.instance_url,
-                    environment: req.query.env,
+                    environment: env,
+                    session_env: req.session?.oauth_env,
+                    query_env: req.query?.env,
                 });
 
                 if (!params.instance_url) {
@@ -51,7 +55,7 @@ class AuthService {
                     accessToken,
                     refreshToken,
                     instanceUrl: params.instance_url,
-                    environment: req.query.env,
+                    environment: env,
                     profile,
                 });
             }
@@ -59,15 +63,18 @@ class AuthService {
 
         // Override the OAuth URLs based on the environment parameter
         strategy.authorizationParams = function (options) {
-            if (!options || !options.req) {
-                console.warn(
-                    "Options or req object missing in authorizationParams"
-                );
-                return {};
-            }
-
-            const env = options.req.query?.env || "salesforce";
+            const env =
+                options?.req?.session?.oauth_env ||
+                options?.req?.query?.env ||
+                "salesforce";
             const config = AuthService.getConfig(env);
+
+            if (!options?.req) {
+                console.warn("Request object missing in authorizationParams");
+                console.log("Available options:", JSON.stringify(options));
+                // Return basic params without modifying OAuth URLs
+                return { env };
+            }
 
             // Set all OAuth endpoints to use the environment-specific base URL
             this._oauth2._authorizeUrl = `${config.baseUrl}/services/oauth2/authorize`;
@@ -75,14 +82,13 @@ class AuthService {
             this._oauth2._clientId = config.clientId;
             this._oauth2._clientSecret = config.clientSecret;
 
-            console.log(`Using OAuth endpoints for ${env}:`, {
+            console.log(`Configuring OAuth endpoints for ${env}:`, {
                 authorizeUrl: this._oauth2._authorizeUrl,
                 accessTokenUrl: this._oauth2._accessTokenUrl,
+                clientId: this._oauth2._clientId?.substring(0, 5) + "...", // Log partial client ID for debugging
             });
 
-            return {
-                env: env,
-            };
+            return { env };
         };
 
         passport.use("salesforce", strategy);

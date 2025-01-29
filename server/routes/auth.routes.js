@@ -6,9 +6,10 @@ const axios = require("axios");
 router.get(
     "/salesforce",
     function (req, res, next) {
-        // Ensure env parameter exists
-        if (!req.query.env) {
-            req.query.env = "salesforce"; // Set default environment
+        // Store the environment in session before starting OAuth
+        if (req.query.env) {
+            req.session.oauth_env = req.query.env;
+            console.log("Stored environment in session:", req.query.env);
         }
         console.log("Starting Salesforce auth for env:", req.query.env);
         next();
@@ -22,9 +23,13 @@ router.get(
 router.get(
     "/salesforce/callback",
     function (req, res, next) {
-        // Ensure env parameter is preserved in callback
-        if (!req.query.env && req.session.env) {
-            req.query.env = req.session.env;
+        // Restore environment from session
+        if (req.session.oauth_env) {
+            req.query.env = req.session.oauth_env;
+            console.log(
+                "Restored environment from session:",
+                req.session.oauth_env
+            );
         }
         next();
     },
