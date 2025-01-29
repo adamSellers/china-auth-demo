@@ -15,8 +15,18 @@ router.get(
 );
 
 router.get("/logout", (req, res) => {
-    req.logout();
-    res.redirect("/");
+    // Properly destroy the session
+    req.session.destroy((err) => {
+        if (err) {
+            console.error("Error destroying session:", err);
+            return res.status(500).json({ error: "Logout failed" });
+        }
+        // Clear the login session
+        req.logout(() => {
+            // Redirect to home page
+            res.redirect("/");
+        });
+    });
 });
 
 router.get("/user-info", async (req, res) => {
