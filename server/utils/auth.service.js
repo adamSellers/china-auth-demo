@@ -59,7 +59,8 @@ class AuthService {
 
         // Override the OAuth URLs based on the environment parameter
         strategy.authorizationParams = function (options) {
-            const env = options.env || "salesforce";
+            // Get environment from the request query
+            const env = options.req.query.env || "salesforce";
             const config = AuthService.getConfig(env);
 
             // Update the authorization and token URLs for this request
