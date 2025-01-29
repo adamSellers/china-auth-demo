@@ -14,9 +14,6 @@ class AuthService {
             clientSecret: isSFOA
                 ? process.env.SFOA_CLIENT_SECRET
                 : process.env.SF_CLIENT_SECRET,
-            callbackUrl: isSFOA
-                ? process.env.SFOA_CALLBACK_URL
-                : process.env.SF_CALLBACK_URL,
         };
     }
 
@@ -41,15 +38,9 @@ class AuthService {
                         const config = this.getConfig(req.query.env);
                         return config.clientSecret;
                     },
-                    callbackURL: (req) => {
-                        const config = this.getConfig(req.query.env);
-                        return (
-                            config.callbackUrl ||
-                            `${req.protocol}://${req.get(
-                                "host"
-                            )}/auth/salesforce/callback`
-                        );
-                    },
+                    callbackURL:
+                        process.env.SF_CALLBACK_URL ||
+                        "http://localhost:3000/auth/salesforce/callback",
                     passReqToCallback: true,
                 },
                 function (req, accessToken, refreshToken, params, profile, cb) {

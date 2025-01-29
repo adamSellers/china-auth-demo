@@ -237,21 +237,7 @@ const HomePage = () => {
                       primary="SFOA_CLIENT_SECRET"
                     />
                   </ListItem>
-                  <ListItem>
-                    <ListItemText 
-                      slotProps={{
-                        primary: { 
-                          sx: { 
-                            fontFamily: 'monospace',
-                            bgcolor: 'grey.100',
-                            px: 1,
-                            display: 'inline'
-                          }
-                        }
-                      }}
-                      primary="SFOA_CALLBACK_URL"
-                    />
-                  </ListItem>
+
                   <ListItem>
                     <ListItemText 
                       slotProps={{
