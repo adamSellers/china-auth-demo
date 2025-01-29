@@ -6,6 +6,8 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const cors = require("cors");
 const session = require("express-session");
+const RedisStore = require("connect-redis").default;
+const { createClient } = require("redis");
 const AuthService = require("./utils/auth.service");
 
 const authRoutes = require("./routes/auth.routes");
@@ -18,19 +20,35 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Session middleware configuration
+// Initialize redis client
+const redisClient = createClient({
+    url: process.env.REDIS_URL,
+    socket: {
+        tls: process.env.NODE_ENV === "production",
+    },
+});
+
+redisClient.on("error", (err) => console.log("Redis Client Error", err));
+redisClient.on("connect", () => console.log("Connected to Redis"));
+
+// Initialize session middleware with Redis
 app.use(
     session({
+        store: new RedisStore({
+            client: redisClient,
+            prefix: "sf-oauth:", // Prefix for Redis keys
+            ttl: 86400, // 24 hours
+        }),
         secret: process.env.SESSION_SECRET || "dev-secret-key",
         resave: false,
         saveUninitialized: false,
         rolling: true,
+        name: "sf.sid", // Custom cookie name
         cookie: {
-            httpOnly: true,
             secure: process.env.NODE_ENV === "production",
+            httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
         },
-        unset: "destroy",
     })
 );
 
