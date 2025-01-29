@@ -29,6 +29,13 @@ const ProfileCard = ({ title, value }) => (
   </Paper>
 );
 
+const handleLogout = (e) => {
+  e.preventDefault();
+  // Set a flag in sessionStorage to redirect to home page after Salesforce logout
+  sessionStorage.setItem('returning_from_logout', 'true');
+  window.location.href = '/auth/logout';
+};
+
 const Dashboard = () => {
   const { user, loading } = useAuth();
 
@@ -72,10 +79,10 @@ const Dashboard = () => {
           <Button
             variant="outlined"
             startIcon={<LogoutIcon />}
-            href="/auth/logout"
-          >
+            onClick={handleLogout}
+        >
             Logout
-          </Button>
+        </Button>
         </Box>
 
         <Typography variant="h6" sx={{ mb: 2 }}>

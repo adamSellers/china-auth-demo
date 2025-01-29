@@ -40,7 +40,7 @@ router.get(
 
 router.get("/logout", async (req, res) => {
     try {
-        if (req.user?.accessToken) {
+        if (req.user && req.user.accessToken) {
             const baseUrl =
                 req.user.environment === "sfoa"
                     ? process.env.SFOA_LOGIN_URL
@@ -52,25 +52,42 @@ router.get("/logout", async (req, res) => {
                     token: req.user.accessToken,
                 },
             });
+
+            // Store the Salesforce logout URL before destroying the session
+            const sfLogoutUrl = `${baseUrl}/secur/logout.jsp`;
+
+            // Destroy the local session
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error("Error destroying session:", err);
+                    return res.status(500).json({ error: "Logout failed" });
+                }
+
+                // Clear the login session
+                req.logout(() => {
+                    // Redirect to Salesforce logout page, which will then redirect back to our app
+                    res.redirect(sfLogoutUrl);
+                });
+            });
+        } else {
+            // If no user or token, just clear local session
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error("Error destroying session:", err);
+                    return res.status(500).json({ error: "Logout failed" });
+                }
+                req.logout(() => {
+                    res.redirect("/");
+                });
+            });
         }
     } catch (error) {
-        console.error("Error revoking Salesforce token:", error);
-        // Continue with local logout even if token revocation fails
-    }
-
-    // Destroy the local session
-    req.session.destroy((err) => {
-        if (err) {
-            console.error("Error destroying session:", err);
-            return res.status(500).json({ error: "Logout failed" });
-        }
-
-        // Clear the login session
-        req.logout(() => {
-            // Redirect to home page
-            res.redirect("/");
+        console.error("Error during logout:", error);
+        res.status(500).json({
+            error: "Logout failed",
+            details: error.message,
         });
-    });
+    }
 });
 
 router.get("/user-info", async (req, res) => {
