@@ -46,15 +46,42 @@ router.get("/logout", async (req, res) => {
                     ? process.env.SFOA_LOGIN_URL
                     : process.env.SF_LOGIN_URL;
 
-            // First, revoke the Salesforce access token
-            await axios.post(`${baseUrl}/services/oauth2/revoke`, null, {
-                params: {
-                    token: req.user.accessToken,
-                },
-            });
+            // Build the app's base URL for the redirect
+            const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+            const appBaseUrl = `${protocol}://${req.headers.host}`;
 
-            // Store the Salesforce logout URL before destroying the session
-            const sfLogoutUrl = `${baseUrl}/secur/logout.jsp`;
+            // First, do a frontend session logout
+            const frontendLogoutUrl = `${baseUrl}/secur/frontdoor.jsp?retURL=${encodeURIComponent(
+                "/secur/logout.jsp"
+            )}&save=true`;
+
+            try {
+                await axios.get(frontendLogoutUrl, {
+                    headers: {
+                        Authorization: `Bearer ${req.user.accessToken}`,
+                    },
+                });
+            } catch (error) {
+                console.error("Error in frontend logout:", error);
+                // Continue with the rest of the logout process
+            }
+
+            // Then revoke the access token
+            try {
+                await axios.post(`${baseUrl}/services/oauth2/revoke`, null, {
+                    params: {
+                        token: req.user.accessToken,
+                    },
+                });
+            } catch (error) {
+                console.error("Error revoking token:", error);
+                // Continue with the rest of the logout process
+            }
+
+            // Finally do the full logout with redirect back to our app
+            const logoutUrl = `${baseUrl}/secur/logout.jsp?retURL=${encodeURIComponent(
+                appBaseUrl
+            )}`;
 
             // Destroy the local session
             req.session.destroy((err) => {
@@ -63,10 +90,9 @@ router.get("/logout", async (req, res) => {
                     return res.status(500).json({ error: "Logout failed" });
                 }
 
-                // Clear the login session
+                // Clear the login session and redirect to Salesforce logout
                 req.logout(() => {
-                    // Redirect to Salesforce logout page, which will then redirect back to our app
-                    res.redirect(sfLogoutUrl);
+                    res.redirect(logoutUrl);
                 });
             });
         } else {
