@@ -279,7 +279,7 @@ const HomePage = () => {
             variant="outlined"
             startIcon={<GitHubIcon />}
             component={Link}
-            href="https://github.com/yourusername/repo"
+            href="https://github.com/adamSellers/china-auth-demo"
             target="_blank"
           >
             View Example Codebase
