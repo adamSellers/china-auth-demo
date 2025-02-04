@@ -61,9 +61,10 @@ router.get(
 // Logout handler - Using consistent session oauth_env variable
 router.get("/logout", async (req, res) => {
     try {
-        // Get correct base URL for environment using session variable
+        // Get correct base URL for environment using the persisted user environment
+        // This matches how we handle it in the user-info endpoint
         const baseUrl =
-            req.session?.oauth_env === "sfoa"
+            req.user.environment === "sfoa"
                 ? process.env.SFOA_LOGIN_URL
                 : process.env.SF_LOGIN_URL;
 
@@ -109,9 +110,11 @@ router.get("/user-info", async (req, res) => {
     }
 
     try {
-        // Using session oauth_env consistently throughout the app
+        // We now use the environment from the user object as it persists through the session
+        // This is more reliable than the session oauth_env which might be reset
+        // The environment was stored during the initial OAuth flow and serialized with the user
         const baseUrl =
-            req.session?.oauth_env === "sfoa"
+            req.user.environment === "sfoa"
                 ? process.env.SFOA_LOGIN_URL
                 : process.env.SF_LOGIN_URL;
 

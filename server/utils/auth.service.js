@@ -34,10 +34,14 @@ class AuthService {
                     return cb(new Error("No instance URL received"));
                 }
 
-                // Use the oauth_env from session that was set during the initial auth request
+                // Store both the environment and token information in the user object
+                // This is crucial as the session might be renewed during the auth process
+                // We need this information to persist through the entire user session
+                const environment = req.session?.oauth_env || "salesforce";
                 return cb(null, {
                     accessToken,
                     refreshToken,
+                    environment, // Store environment in user object for persistence
                     instance_url: params.instance_url,
                 });
             }
@@ -71,9 +75,13 @@ class AuthService {
 
         // User serialization - Only store essential information
         passport.serializeUser((user, done) => {
+            // Serialize both the tokens and environment information
+            // This ensures we maintain the correct environment context
+            // throughout the user's session, even after passport deserializes
             done(null, {
                 accessToken: user.accessToken,
                 instance_url: user.instance_url,
+                environment: user.environment, // Include environment in serialized data
             });
         });
 
