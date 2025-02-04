@@ -2,15 +2,22 @@
 const passport = require("passport");
 const OAuth2Strategy = require("passport-oauth2");
 
+/**
+ * AuthService handles the configuration and initialization of Passport's OAuth2 strategy
+ * for Salesforce authentication. It dynamically switches between Salesforce and
+ * Salesforce on Alibaba Cloud environments based on the session oauth_env variable.
+ */
 class AuthService {
     initializePassport() {
-        // Remove any existing strategy
+        // Remove any existing strategy to prevent duplicates
         if (passport._strategies.salesforce) {
             passport.unuse("salesforce");
         }
 
+        // Configure the base OAuth2 strategy
         const strategy = new OAuth2Strategy(
             {
+                // These default values will be overridden in the authenticate method
                 authorizationURL:
                     process.env.SF_LOGIN_URL + "/services/oauth2/authorize",
                 tokenURL: process.env.SF_LOGIN_URL + "/services/oauth2/token",
@@ -27,19 +34,21 @@ class AuthService {
                     return cb(new Error("No instance URL received"));
                 }
 
-                const environment = req.session?.oauth_env || "salesforce";
+                // Use the oauth_env from session that was set during the initial auth request
                 return cb(null, {
                     accessToken,
                     refreshToken,
-                    environment,
                     instance_url: params.instance_url,
                 });
             }
         );
 
-        // Override authenticate method for dynamic configuration
+        // Override the authenticate method to dynamically configure OAuth endpoints
+        // This is necessary because the endpoints and credentials differ between
+        // Salesforce and Salesforce on Alibaba Cloud environments
         const originalAuthenticate = strategy.authenticate;
         strategy.authenticate = function (req, options) {
+            // Use oauth_env from session to determine which environment to use
             const env = req.session?.oauth_env;
 
             if (env === "sfoa") {
@@ -56,24 +65,24 @@ class AuthService {
                 this._oauth2._clientSecret = process.env.SF_CLIENT_SECRET;
             }
 
+            // Call the original authenticate method with the updated configuration
             return originalAuthenticate.call(this, req, options);
         };
 
-        // User serialization
+        // User serialization - Only store essential information
         passport.serializeUser((user, done) => {
             done(null, {
                 accessToken: user.accessToken,
-                environment: user.environment,
                 instance_url: user.instance_url,
             });
         });
 
-        // User deserialization
+        // User deserialization - Reconstruct user object from stored data
         passport.deserializeUser((user, done) => {
             done(null, user);
         });
 
-        // Register the strategy
+        // Register the strategy with Passport
         passport.use("salesforce", strategy);
     }
 }

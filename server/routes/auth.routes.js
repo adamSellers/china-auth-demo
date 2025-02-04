@@ -1,10 +1,12 @@
 // auth.routes.js
+
 const express = require("express");
 const passport = require("passport");
 const router = express.Router();
 const axios = require("axios");
 
-// Initial auth endpoint
+// Initial auth endpoint - This is where we first set the oauth environment in the session
+// This environment variable will be used throughout the auth flow
 router.get(
     "/salesforce",
     (req, res, next) => {
@@ -13,6 +15,8 @@ router.get(
             sessionId: req.sessionID,
         });
 
+        // Store the environment selection in the session
+        // This is necessary because req.user isn't available during the initial OAuth flow
         if (req.query.env) {
             req.session.oauth_env = req.query.env;
             return req.session.save((err) => {
@@ -31,7 +35,7 @@ router.get(
     })
 );
 
-// OAuth callback handler
+// OAuth callback handler - By this point, oauth_env is stored in the session
 router.get(
     "/salesforce/callback",
     (req, res, next) => {
@@ -54,12 +58,12 @@ router.get(
     }
 );
 
-// Logout handler
+// Logout handler - Using consistent session oauth_env variable
 router.get("/logout", async (req, res) => {
     try {
-        // Get correct base URL for environment
+        // Get correct base URL for environment using session variable
         const baseUrl =
-            req.user?.environment === "sfoa"
+            req.session?.oauth_env === "sfoa"
                 ? process.env.SFOA_LOGIN_URL
                 : process.env.SF_LOGIN_URL;
 
@@ -98,25 +102,16 @@ router.get("/logout", async (req, res) => {
     }
 });
 
-// Session status endpoint
-router.get("/session-status", (req, res) => {
-    res.json({
-        isAuthenticated: req.isAuthenticated(),
-        session: req.session,
-        user: req.user,
-        cookies: req.cookies,
-    });
-});
-
-// User info endpoint
+// User info endpoint - Also using session oauth_env for consistency
 router.get("/user-info", async (req, res) => {
     if (!req.user?.accessToken) {
         return res.status(401).json({ error: "Not authenticated" });
     }
 
     try {
+        // Using session oauth_env consistently throughout the app
         const baseUrl =
-            req.user.environment === "sfoa"
+            req.session?.oauth_env === "sfoa"
                 ? process.env.SFOA_LOGIN_URL
                 : process.env.SF_LOGIN_URL;
 
@@ -140,6 +135,16 @@ router.get("/user-info", async (req, res) => {
             details: error.message,
         });
     }
+});
+
+// Session status endpoint - Useful for debugging
+router.get("/session-status", (req, res) => {
+    res.json({
+        isAuthenticated: req.isAuthenticated(),
+        session: req.session,
+        user: req.user,
+        cookies: req.cookies,
+    });
 });
 
 module.exports = router;
