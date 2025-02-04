@@ -1,0 +1,66 @@
+{
+    "name": "salesforce-oauth-demo",
+    "description": "A demo application showcasing Salesforce OAuth integration with support for both Salesforce and Salesforce on Alibaba Cloud environments",
+    "repository": "https://github.com/yourusername/repo",
+    "keywords": ["node", "express", "salesforce", "oauth", "react"],
+    "success_url": "/",
+    "env": {
+        "NODE_ENV": {
+            "description": "Environment setting for the application",
+            "value": "production"
+        },
+        "SESSION_SECRET": {
+            "description": "A secret key for signing session cookies",
+            "generator": "secret"
+        },
+        "SF_CLIENT_ID": {
+            "description": "Salesforce OAuth Client ID",
+            "required": true
+        },
+        "SF_CLIENT_SECRET": {
+            "description": "Salesforce OAuth Client Secret",
+            "required": true
+        },
+        "SF_CALLBACK_URL": {
+            "description": "OAuth callback URL (e.g., https://your-app.herokuapp.com/auth/salesforce/callback)",
+            "required": true
+        },
+        "SF_LOGIN_URL": {
+            "description": "Salesforce login URL",
+            "value": "https://login.salesforce.com"
+        },
+        "SFOA_CLIENT_ID": {
+            "description": "Salesforce on Alibaba Cloud OAuth Client ID",
+            "required": true
+        },
+        "SFOA_CLIENT_SECRET": {
+            "description": "Salesforce on Alibaba Cloud OAuth Client Secret",
+            "required": true
+        },
+        "SFOA_LOGIN_URL": {
+            "description": "Salesforce on Alibaba Cloud login URL",
+            "value": "https://login.sfcrmproducts.cn"
+        }
+    },
+    "addons": [
+        {
+            "plan": "heroku-redis:mini",
+            "as": "REDIS"
+        }
+    ],
+    "buildpacks": [
+        {
+            "url": "heroku/nodejs"
+        }
+    ],
+    "engines": {
+        "node": "20.x",
+        "npm": "10.x"
+    },
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "basic"
+        }
+    }
+}

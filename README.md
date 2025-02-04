@@ -4,7 +4,7 @@ This application demonstrates OAuth 2.0 integration with Salesforce, supporting 
 
 ## Quick Deploy to Heroku
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/adamSellers/china-auth-demo)
 
 ## Project Structure
 
