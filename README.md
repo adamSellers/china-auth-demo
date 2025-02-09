@@ -109,10 +109,6 @@ Repeat this step for both Salesforce, and Salesforce on Alibaba Cloud instances
 
     ```
 
-
-
-    ```
-
 ### 4. Running the Application
 
 To start both front and back end, from project root run
