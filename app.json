@@ -4,6 +4,9 @@
     "repository": "https://github.com/adamSellers/china-auth-demo",
     "keywords": ["node", "express", "salesforce", "oauth", "react"],
     "success_url": "/",
+    "scripts": {
+        "postdeploy": "npm run heroku-postbuild"
+    },
     "env": {
         "NODE_ENV": {
             "description": "Environment setting for the application",
@@ -42,21 +45,12 @@
             "value": "https://login.sfcrmproducts.cn"
         }
     },
-    "addons": [
-        {
-            "plan": "heroku-redis:mini",
-            "as": "REDIS"
-        }
-    ],
+    "addons": ["heroku-redis:mini"],
     "buildpacks": [
         {
             "url": "heroku/nodejs"
         }
     ],
-    "engines": {
-        "node": "20.x",
-        "npm": "10.x"
-    },
     "formation": {
         "web": {
             "quantity": 1,
