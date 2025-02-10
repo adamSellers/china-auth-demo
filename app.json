@@ -1,7 +1,7 @@
 {
     "name": "salesforce-oauth-demo",
     "description": "A demo application showcasing Salesforce OAuth integration with support for both Salesforce and Salesforce on Alibaba Cloud environments",
-    "repository": "https://github.com/yourusername/repo",
+    "repository": "https://github.com/adamSellers/china-auth-demo",
     "keywords": ["node", "express", "salesforce", "oauth", "react"],
     "success_url": "/",
     "env": {
