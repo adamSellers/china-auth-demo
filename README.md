@@ -1,12 +1,8 @@
 # Salesforce OAuth Demo
 
-This application demonstrates OAuth 2.0 integration with Salesforce, supporting both global and China instances.
+本应用程序展示了与 Salesforce 的 OAuth 2.0 集成，支持全球和中国实例
 
-## Quick Deploy to Heroku
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://www.heroku.com/deploy?template=https://github.com/adamSellers/china-auth-demo)
-
-## Project Structure
+## 项目结构
 
 ```
 server
@@ -61,39 +57,39 @@ client
 
 ```
 
-## Local Deployment Steps
+## 本地部署步骤
 
-### Prerequisites
+### 前提条件
 
 -   Node.js 20.x
 -   npm 10.x
 -   Redis
 
-Refer [here](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/) for specific instructions on installing Redis locally.
+有关在本地安装 Redis 的具体说明，请参考[此处](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/)。
 
-### 1. Fork and Clone
+### 1. Fork 和克隆
 
-1. Fork this repository
-2. Clone your forked repository locally
+1. Fork 此仓库
+2. 在本地克隆您的 fork 仓库
 
-### 2. Create two External Client Apps
+### 2. 创建两个外部客户端应用程序
 
-Repeat this step for both Salesforce, and Salesforce on Alibaba Cloud instances
+对 Salesforce 和阿里云上的 Salesforce 实例重复此步骤
 
-1. Log in to your Salesforce org
-2. Go to Setup > Apps > App Manager
-3. Click "New Connected App" and select "Create External Client App"
-4. Fill in the basic information
-5. Enable OAuth Settings
-6. Set the callback URL to `https://your-app-name.herokuapp.com/auth/salesforce/callback`
-7. Add the following OAuth scopes:
-    - Access and manage your data (api)
-    - Access your basic information (id, profile, email, address, phone)
-    - Perform requests at any time (refresh_token, offline_access)
-8. Save the application
-9. Copy your Consumer Key (Client ID) and Consumer Secret
+1. 登录您的 Salesforce 组织
+2. 进入设置 > 应用程序 > 应用程序管理器
+3. 点击"新建连接应用程序"并选择"创建外部客户端应用程序"
+4. 填写基本信息
+5. 启用 OAuth 设置
+6. 将回调 URL 设置为`http://localhost:3000/auth/salesforce/callback`
+7. 添加以下 OAuth 范围：
+    - 访问和管理您的数据(api)
+    - 访问您的基本信息(id, profile, email, address, phone)
+    - 随时执行请求(refresh_token, offline_access)
+8. 保存应用程序
+9. 复制您的消费者密钥(客户端 ID)和消费者密钥
 
-### 3. Create a .env file in the server directory with the following detail
+### 3. 在 server 目录中创建一个.env 文件，包含以下详细信息
 
     ```
     SESSION_SECRET=your-random-secret-key
@@ -101,7 +97,7 @@ Repeat this step for both Salesforce, and Salesforce on Alibaba Cloud instances
     SF_CLIENT_SECRET=your-salesforce-client-secret
     SFOA_CLIENT_ID=your-salesforce-on-alibaba-cloud-client-id
     SFOA_CLIENT_SECRET=your-salesforce-on-alibaba-cloud-client-secret
-    SF_CALLBACK_URL=https://your-app-name.herokuapp.com/auth/salesforce/callback
+    SF_CALLBACK_URL=http://localhost:3000/auth/salesforce/callback
     SF_LOGIN_URL=https://login.salesforce.com
     SFOA_LOGIN_URL=https://login.sfcrmproducts.cn
     REDIS_URL=your-redis-connection-string
@@ -109,29 +105,29 @@ Repeat this step for both Salesforce, and Salesforce on Alibaba Cloud instances
 
     ```
 
-### 4. Running the Application
+### 4. 运行应用程序
 
-To start both front and back end, from project root run
+要同时启动前端和后端，从项目根目录运行
 
 ```bash
 npm run dev
 ```
 
-This will start:
+这将启动：
 
--   Backend server on http://localhost:3000
--   Frontend dev server on http://localhost:5173
+-   后端服务器在 http://localhost:3000
+-   前端开发服务器在 http://localhost:5173
 
-#### Running Frontend and Backend Separately
+#### 分别运行前端和后端
 
 ```bash
-# Start just the backend
+# 仅启动后端
 npm run dev:server
 
-# Start just the frontend
+# 仅启动前端
 npm run dev:client
 ```
 
-## License
+## 许可证
 
 MIT
